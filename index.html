@@ -55,7 +55,7 @@
             margin: 10px 0;
             border-radius: 8px;
             border: none;
-            box-sizing: border-box; /* Previne depășirea containerului */
+            box-sizing: border-box; 
         }
 
         button {
@@ -95,7 +95,6 @@
             margin: 0 auto 15px auto;
         }
 
-        /* Task Card Style */
         .task-card {
             background: white;
             color: #333;
@@ -124,46 +123,18 @@
             gap: 10px;
         }
 
-        .skip-btn {
-            background: #ff4757;
-            font-size: 0.8rem;
-            padding: 8px;
-        }
+        .skip-btn { background: #ff4757; font-size: 0.8rem; padding: 8px; }
+        .upload-btn { background: #2ed573; font-size: 0.8rem; padding: 8px; }
 
-        .upload-btn {
-            background: #2ed573;
-            font-size: 0.8rem;
-            padding: 8px;
-        }
-
-        /* Voting Gallery */
-        .gallery {
-            display: grid;
-            gap: 15px;
-        }
-
-        .gallery img {
-            width: 100%;
-            border-radius: 10px;
-            cursor: pointer;
-            border: 4px solid transparent;
-            transition: transform 0.2s;
-        }
-
-        .gallery img.selected {
-            border-color: #ffd700;
-            transform: scale(0.95);
-        }
+        .gallery { display: grid; gap: 15px; }
+        .gallery img { width: 100%; border-radius: 10px; cursor: pointer; border: 4px solid transparent; transition: transform 0.2s; }
+        .gallery img.selected { border-color: #ffd700; transform: scale(0.95); }
 
         .hidden { display: none !important; }
 
         .leaderboard-item {
-            text-align: center;
-            margin-bottom: 20px;
-            background: rgba(255,255,255,0.9);
-            color: #333;
-            padding: 15px;
-            border-radius: 10px;
+            text-align: center; margin-bottom: 20px; background: rgba(255,255,255,0.9);
+            color: #333; padding: 15px; border-radius: 10px;
         }
     </style>
 </head>
@@ -174,7 +145,7 @@
             <h1>City Hunt Login</h1>
             <div class="form-group">
                 <input type="text" id="username" placeholder="Numele tău" required>
-                <input type="password" id="password" placeholder="Parola (orice pt. test)" required>
+                <input type="password" id="password" placeholder="Parola (orice)">
                 <label for="profile-pic"><i class="fas fa-camera"></i> Poză profil (Opțional)</label>
                 <input type="file" id="profile-pic" accept="image/*">
             </div>
@@ -193,7 +164,6 @@
                     <button onclick="window.joinRoom()" style="background:#00b894">Intră în Cameră</button>
                 </div>
             </div>
-            <p id="lobby-msg" style="text-align:center; font-size:0.8rem; opacity:0.8; margin-top:15px;"></p>
         </div>
 
         <div id="game-screen" class="screen">
@@ -201,10 +171,7 @@
                 <h3>Camera: <span id="room-name-display" style="color:#ffeaa7"></span></h3>
                 <button id="start-btn" onclick="window.startGame()">🚀 START JOC</button>
             </div>
-            
-            <div id="tasks-container">
-                </div>
-
+            <div id="tasks-container"></div>
             <button id="more-tasks-btn" class="hidden" onclick="window.loadMoreTasks()">Vreau încă 5 task-uri!</button>
             <button id="finish-game-btn" class="hidden" onclick="window.goToVoting()">🏁 Am terminat! Trimite.</button>
         </div>
@@ -224,13 +191,12 @@
     </div>
 
     <script type="module">
-        // Importăm Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
-        // --- CONFIGURAREA TA (Secret Santa) ---
+        // CONFIGURAREA TA
         const firebaseConfig = {
             apiKey: "AIzaSyAkMDbDQVyWqeOKlyB9n7_93q7f6RuHiX0",
             authDomain: "secret-santa-ce9e0.firebaseapp.com",
@@ -241,13 +207,12 @@
             measurementId: "G-NFB9ZR8YSG"
         };
 
-        // Inițializare
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
 
-        // --- STATE ---
+        // VARIABILE
         let currentUser = null;
         let currentRoom = null;
         let skipsAvailable = 2;
@@ -255,63 +220,64 @@
         let myVotes = 5;
         let votedIndices = [];
 
-        // Listă task-uri
+        // TASKURI
         const allTasks = [
-            "Fă poză cu 2 oameni random.", 
-            "Fă o poză unui autograf primit.", 
-            "Fă un selfie high-five cu un străin.",
-            "Poză cu o clădire cu arhitectură interesantă.", 
-            "Poză la cea mai colorată ușă.",
-            "Poză imitând o statuie.", 
-            "Adu 5 cărți de vizită (poză).", 
-            "Poză cu un bon fiscal și ora.",
-            "Săritură în aer într-o piață.", 
-            "Poză cu un obiect galben aprins.",
-            "Selfie mușcând dintr-o patiserie locală.", 
-            "Poză cu un câine.",
-            "Poză reflexiei tale într-o vitrină.",
-            "Găsește un semn stradal amuzant.",
-            "Poză cu un copac bătrân."
+            "Fă poză cu 2 oameni random.", "Autograf primit de la cineva.", 
+            "Selfie high-five cu un străin.", "Clădire cu arhitectură interesantă.", 
+            "Cea mai colorată ușă.", "Imită o statuie.", "5 cărți de vizită.", 
+            "Bon fiscal cu ora vizibilă.", "Săritură în aer.", "Obiect galben aprins.", 
+            "Selfie mușcând dintr-o patiserie.", "Poză cu un câine.", 
+            "Reflexia ta într-o vitrină.", "Semn stradal amuzant.", "Copac bătrân."
         ];
 
-        // --- HELPERS ---
+        // FUNCȚII AUXILIARE
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
         }
 
-        // --- 1. LOGIN ---
+        // --- 1. LOGIN (REPARAT SĂ NU ÎNGHEȚE) ---
         window.handleLogin = async () => {
             const name = document.getElementById('username').value;
             const file = document.getElementById('profile-pic').files[0];
             const defaultPic = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-            if (!name) return alert("Te rog introdu un nume!");
+            if (!name) return alert("Introdu un nume!");
 
             const btn = document.querySelector('#login-screen button');
             btn.innerText = "Se conectează...";
             btn.disabled = true;
 
             try {
-                // Login Anonim Firebase
+                // 1. Conectare anonimă obligatorie
                 await signInAnonymously(auth);
 
                 let photoURL = defaultPic;
+
+                // 2. Încercăm Upload Poza cu protecție la eroare
                 if (file) {
-                    const storageRef = ref(storage, `profiles/${name}_${Date.now()}`);
-                    await uploadBytes(storageRef, file);
-                    photoURL = await getDownloadURL(storageRef);
+                    try {
+                        const storageRef = ref(storage, `profiles/${name}_${Date.now()}`);
+                        await uploadBytes(storageRef, file);
+                        photoURL = await getDownloadURL(storageRef);
+                    } catch (uploadError) {
+                        console.error("Upload eșuat (CORS sau Permisiuni):", uploadError);
+                        alert("Nu s-a putut încărca poza (eroare server). Intri cu avatarul default!");
+                        // Continuăm cu photoURL default, NU oprim execuția
+                    }
                 }
 
+                // 3. Salvăm utilizatorul în DB
                 currentUser = { name, photo: photoURL };
                 await setDoc(doc(db, "users", name), currentUser, { merge: true });
 
                 document.getElementById('display-name').innerText = name;
                 document.getElementById('user-avatar').src = photoURL;
                 showScreen('lobby-screen');
+
             } catch (error) {
-                console.error(error);
-                alert("Eroare! Verifică consola (F12) sau regulile Firebase.");
+                console.error("Eroare Login:", error);
+                alert("Eroare la conectare: " + error.message);
                 btn.innerText = "Intră în joc";
                 btn.disabled = false;
             }
@@ -321,34 +287,23 @@
         window.createRoom = async () => {
             const roomName = document.getElementById('room-input').value.trim();
             if (!roomName) return alert("Pune un nume la cameră!");
-
             try {
                 await setDoc(doc(db, "rooms", roomName), {
-                    status: "lobby", 
-                    players: arrayUnion(currentUser.name),
-                    submissions: []
+                    status: "lobby", players: arrayUnion(currentUser.name), submissions: []
                 });
                 enterRoom(roomName);
-            } catch (e) {
-                alert("Eroare la creare: " + e.message);
-            }
+            } catch (e) { alert("Eroare: " + e.message); }
         };
 
         window.joinRoom = async () => {
             const roomName = document.getElementById('room-input').value.trim();
-            if (!roomName) return alert("Introdu numele camerei!");
-
+            if (!roomName) return alert("Numele camerei?");
             const roomRef = doc(db, "rooms", roomName);
             const roomSnap = await getDoc(roomRef);
-
             if (roomSnap.exists()) {
-                await updateDoc(roomRef, {
-                    players: arrayUnion(currentUser.name)
-                });
+                await updateDoc(roomRef, { players: arrayUnion(currentUser.name) });
                 enterRoom(roomName);
-            } else {
-                alert("Această cameră nu există!");
-            }
+            } else { alert("Camera nu există!"); }
         };
 
         function enterRoom(roomName) {
@@ -366,11 +321,9 @@
 
         function generateTasks(count) {
             const container = document.getElementById('tasks-container');
-            
             for(let i=0; i<count; i++) {
                 const randomTask = allTasks[Math.floor(Math.random() * allTasks.length)];
                 const taskId = `task_${Date.now()}_${i}`;
-                
                 const div = document.createElement('div');
                 div.className = 'task-card';
                 div.id = taskId;
@@ -395,16 +348,14 @@
                 document.querySelectorAll('.skip-btn').forEach(btn => btn.innerText = `❌ Skip (${skipsAvailable})`);
             } else {
                 card.classList.add('failed');
-                card.innerHTML += `<p style="color:#721c24; font-weight:bold; margin-top:5px;">TASK EȘUAT</p>`;
-                const actions = card.querySelector('.task-actions');
-                if(actions) actions.remove();
+                card.innerHTML += `<p style="color:#721c24; font-weight:bold;">TASK EȘUAT</p>`;
+                card.querySelector('.task-actions')?.remove();
             }
         };
 
         window.uploadProof = async (taskId, input) => {
             const file = input.files[0];
             if(!file) return;
-
             const card = document.getElementById(taskId);
             card.style.opacity = "0.5"; 
 
@@ -416,20 +367,12 @@
 
                 await updateDoc(doc(db, "rooms", currentRoom), {
                     submissions: arrayUnion({
-                        user: currentUser.name,
-                        photo: url,
-                        votes: 0,
-                        task: taskText
+                        user: currentUser.name, photo: url, votes: 0, task: taskText
                     })
                 });
-
                 card.style.opacity = "1";
                 card.classList.add('completed');
-                card.innerHTML = `
-                    <p>✅ <strong>${taskText}</strong></p>
-                    <img src="${url}" width="100%" style="border-radius:8px; margin-top:10px;">
-                `;
-                
+                card.innerHTML = `<p>✅ <strong>${taskText}</strong></p><img src="${url}" width="100%" style="border-radius:8px; margin-top:10px;">`;
                 completedTasksCount++;
                 if(completedTasksCount === 5) {
                     document.getElementById('more-tasks-btn').classList.remove('hidden');
@@ -437,7 +380,7 @@
                 }
             } catch (e) {
                 console.error(e);
-                alert("Eroare la upload! " + e.message);
+                alert("Eroare la upload (verifică consola): " + e.message);
                 card.style.opacity = "1";
             }
         };
@@ -448,10 +391,8 @@
         };
 
         window.goToVoting = async () => {
-            if(confirm("Sigur vrei să termini? Toți participanții vor fi mutați la votare.")) {
-                await updateDoc(doc(db, "rooms", currentRoom), {
-                    status: "voting"
-                });
+            if(confirm("Sigur termini? Toți vor trece la votare.")) {
+                await updateDoc(doc(db, "rooms", currentRoom), { status: "voting" });
             }
         };
 
@@ -460,7 +401,6 @@
             onSnapshot(doc(db, "rooms", currentRoom), (docSnap) => {
                 if(!docSnap.exists()) return;
                 const data = docSnap.data();
-                
                 if (data.status === "voting") {
                     if(!document.getElementById('voting-screen').classList.contains('active')) {
                         setupVotingScreen(data.submissions);
@@ -476,46 +416,29 @@
         function setupVotingScreen(submissions) {
             const gallery = document.getElementById('voting-gallery');
             gallery.innerHTML = '';
-            
             if(!submissions || submissions.length === 0) {
-                gallery.innerHTML = "<p>Nimeni nu a trimis poze :(</p>";
-                return;
+                gallery.innerHTML = "<p>Fără poze :(</p>"; return;
             }
-
             submissions.forEach((sub, index) => {
-                // Nu votăm pozele proprii
                 if(sub.user !== currentUser.name) {
-                    const imgWrapper = document.createElement('div');
-                    imgWrapper.style.background = "white";
-                    imgWrapper.style.padding = "10px";
-                    imgWrapper.style.borderRadius = "10px";
-                    imgWrapper.style.color = "#333";
-
-                    const img = document.createElement('img');
-                    img.src = sub.photo;
-                    img.onclick = () => toggleVote(index, img);
-                    img.dataset.index = index; 
-                    
-                    const info = document.createElement('div');
-                    info.innerHTML = `<strong>${sub.user}</strong><br><small>${sub.task}</small>`;
-                    info.style.marginTop = "5px";
-
-                    imgWrapper.appendChild(img);
-                    imgWrapper.appendChild(info);
-                    gallery.appendChild(imgWrapper);
+                    const div = document.createElement('div');
+                    div.style.background = "white"; div.style.padding = "10px"; div.style.borderRadius = "10px"; div.style.color="#333";
+                    div.innerHTML = `<img src="${sub.photo}" onclick="window.toggleVote(${index}, this)" data-index="${index}" style="width:100%; border-radius:10px; cursor:pointer; border:4px solid transparent;">
+                                     <div style="margin-top:5px;"><strong>${sub.user}</strong><br><small>${sub.task}</small></div>`;
+                    gallery.appendChild(div);
                 }
             });
         }
 
-        window.toggleVote = (index, imgElement) => { // Fixed scope
+        window.toggleVote = (index, img) => {
             if (votedIndices.includes(index)) {
                 votedIndices = votedIndices.filter(i => i !== index);
-                imgElement.classList.remove('selected');
+                img.style.borderColor = "transparent"; img.style.transform = "scale(1)";
                 myVotes++;
             } else {
                 if (myVotes > 0) {
                     votedIndices.push(index);
-                    imgElement.classList.add('selected');
+                    img.style.borderColor = "#ffd700"; img.style.transform = "scale(0.95)";
                     myVotes--;
                 }
             }
@@ -525,44 +448,27 @@
 
         window.finalizeVoting = async () => {
             const roomRef = doc(db, "rooms", currentRoom);
-            const roomSnap = await getDoc(roomRef);
-            let subs = roomSnap.data().submissions;
-
-            votedIndices.forEach(idx => {
-                // Notă: Aici ne bazăm pe ordinea array-ului, ceea ce e riscant în producție reală
-                // dar OK pentru proiect mic.
-                if(subs[idx]) {
-                    subs[idx].votes = (subs[idx].votes || 0) + 1;
-                }
-            });
-
-            await updateDoc(roomRef, { submissions: subs });
-            await updateDoc(roomRef, { status: "finished" });
+            const snap = await getDoc(roomRef);
+            let subs = snap.data().submissions;
+            votedIndices.forEach(idx => { if(subs[idx]) subs[idx].votes = (subs[idx].votes || 0) + 1; });
+            await updateDoc(roomRef, { submissions: subs, status: "finished" });
         };
 
         function showResults(submissions) {
             submissions.sort((a, b) => (b.votes || 0) - (a.votes || 0));
-            
             const board = document.getElementById('leaderboard');
             board.innerHTML = '';
-            
             submissions.forEach((sub, i) => {
-                let medal = "";
-                if(i===0) medal = "🥇";
-                if(i===1) medal = "🥈";
-                if(i===2) medal = "🥉";
-
+                let medal = i===0 ? "🥇" : (i===1 ? "🥈" : (i===2 ? "🥉" : ""));
                 board.innerHTML += `
                     <div class="leaderboard-item">
                         <h2 style="margin:0">${medal} #${i+1} ${sub.user}</h2>
                         <h4 style="margin:5px 0 15px 0; color:#e84393;">${sub.votes || 0} Voturi</h4>
                         <img src="${sub.photo}" width="100%" style="border-radius:10px;">
                         <p style="font-size:0.9rem; color:#666; margin-top:5px;">Task: ${sub.task}</p>
-                    </div>
-                `;
+                    </div>`;
             });
         }
     </script>
 </body>
 </html>
-
