@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ro">
 <head>
@@ -10,11 +9,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* --- MODERN UI & VARIABLES (STIL SECRET SANTA) --- */
+        /* --- MODERN UI (Dark Mode + Glassmorphism) --- */
         :root {
-            --primary: #ff3b3f; /* Red */
-            --secondary: #6c5ce7; /* Purple */
-            --accent: #ffcc00; /* Gold */
+            --primary: #ff3b3f; 
+            --secondary: #6c5ce7;
+            --accent: #ffcc00;
             --green: #2dc937;
             --dark-bg: #0a0a0a;
             --glass: rgba(255, 255, 255, 0.08);
@@ -45,22 +44,13 @@
             margin-top: 20px;
         }
 
-        h1 {
-            font-weight: 600;
-            color: var(--primary);
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            text-shadow: 0 0 20px rgba(255, 59, 63, 0.4);
-        }
-
+        h1 { font-weight: 600; color: var(--primary); font-size: 2.5rem; margin-bottom: 20px; text-shadow: 0 0 20px rgba(255, 59, 63, 0.4); }
         h2 { font-weight: 600; color: var(--accent); margin-bottom: 15px; }
 
-        /* --- SCREEN VISIBILITY --- */
         .screen { display: none; animation: fadeIn 0.5s ease-in-out; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- GLASS CARDS --- */
         .glass-card {
             background: var(--glass);
             backdrop-filter: blur(12px);
@@ -72,103 +62,55 @@
             margin-bottom: 20px;
         }
         
-        /* --- INPUTS --- */
         input {
-            width: 100%;
-            padding: 16px;
-            margin: 8px 0;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.3);
-            color: white;
-            font-size: 1rem;
-            transition: 0.3s;
+            width: 100%; padding: 16px; margin: 8px 0; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3);
+            color: white; font-size: 1rem; transition: 0.3s;
         }
-        input:focus {
-            border-color: var(--accent);
-            background: rgba(0,0,0,0.5);
-            box-shadow: 0 0 15px rgba(255, 204, 0, 0.2);
-        }
+        input:focus { border-color: var(--accent); background: rgba(0,0,0,0.5); box-shadow: 0 0 15px rgba(255, 204, 0, 0.2); }
 
-        /* --- BUTTONS --- */
         .btn {
             background: linear-gradient(135deg, var(--primary), #a80000);
-            color: white;
-            border: none;
-            padding: 16px 40px;
-            font-size: 1.1rem;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 20px;
-            box-shadow: 0 10px 20px rgba(255, 59, 63, 0.3);
-            transition: transform 0.2s;
+            color: white; border: none; padding: 16px 40px; font-size: 1.1rem;
+            border-radius: 50px; cursor: pointer; font-weight: 600; width: 100%;
+            margin-top: 20px; box-shadow: 0 10px 20px rgba(255, 59, 63, 0.3); transition: transform 0.2s;
         }
         .btn:active { transform: scale(0.95); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* --- UPLOAD ZONE (STIL SECRET SANTA) --- */
         .file-upload-wrapper { margin: 15px 0; }
         .custom-file-upload {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 15px;
-            cursor: pointer;
-            background: rgba(255,255,255,0.05);
-            border: 2px dashed rgba(255,255,255,0.2);
-            border-radius: 15px;
-            color: #ccc;
-            transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 15px; cursor: pointer; background: rgba(255,255,255,0.05);
+            border: 2px dashed rgba(255,255,255,0.2); border-radius: 15px; color: #ccc; transition: 0.3s;
         }
         .custom-file-upload:hover { border-color: var(--accent); color: var(--accent); }
         input[type="file"] { display: none; }
 
-        /* --- GAME ELEMENTS --- */
         .avatar-small {
-            width: 80px; height: 80px;
-            border-radius: 50%;
-            border: 3px solid var(--accent);
-            object-fit: cover;
-            margin: -50px auto 15px;
-            display: block;
-            background: #000;
+            width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--accent);
+            object-fit: cover; margin: -50px auto 15px; display: block; background: #000;
             box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
         }
 
         .task-card {
-            background: white;
-            color: #333;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 15px;
-            position: relative;
-            text-align: left;
+            background: white; color: #333; padding: 15px; margin-bottom: 10px;
+            border-radius: 15px; position: relative; text-align: left;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .task-card.completed { background: #d4edda; border-left: 5px solid var(--green); }
         .task-card.failed { background: #f8d7da; border-left: 5px solid var(--primary); opacity: 0.8; }
 
-        .task-actions {
-            display: flex; justify-content: space-between; margin-top: 10px; gap: 10px;
-        }
-        .action-btn {
-            padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; border: none; cursor: pointer; color: white;
-        }
+        .task-actions { display: flex; justify-content: space-between; margin-top: 10px; gap: 10px; }
+        .action-btn { padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; border: none; cursor: pointer; color: white; }
         .btn-upload { background: var(--green); }
         .btn-skip { background: var(--primary); }
-
-        .hidden { display: none !important; }
-
-        /* Gallery & Voting */
+        
         .gallery { display: grid; gap: 15px; }
         .gallery img { width: 100%; border-radius: 10px; cursor: pointer; border: 4px solid transparent; transition: transform 0.2s; }
         .gallery img.selected { border-color: var(--accent); transform: scale(0.96); }
         
-        .room-controls { margin-top: 20px; }
-        .room-controls button { width: 48%; margin: 5px 1%; display: inline-block; padding: 12px; font-size: 0.9rem; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -178,10 +120,10 @@
 
         <div id="login-screen" class="glass-card screen active">
             <h2>Identificare</h2>
-            <p style="opacity: 0.8; margin-bottom: 20px;">Cine ești, exploratorule?</p>
+            <p style="opacity: 0.8; margin-bottom: 20px;">Fără cont, doar nume și parolă.</p>
             
             <input type="text" id="username" placeholder="Numele tău" required autocomplete="off">
-            <input type="password" id="userpass" placeholder="Parolă (pentru a-ți proteja contul)" required>
+            <input type="password" id="userpass" placeholder="Parolă secretă" required>
             
             <div id="upload-area">
                 <div class="file-upload-wrapper">
@@ -222,7 +164,6 @@
             </div>
             
             <div id="tasks-container"></div>
-
             <button id="more-tasks-btn" class="btn hidden" onclick="loadMoreTasks()" style="background:#6c5ce7">Încă 5 task-uri!</button>
             <button id="finish-game-btn" class="btn hidden" onclick="goToVoting()" style="background:#ff9f43">🏁 Am terminat!</button>
         </div>
@@ -242,10 +183,10 @@
     </div>
 
     <script type="module">
+        // Importăm DOAR Firestore și Storage. FĂRĂ Auth.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, uploadString } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
         // CONFIGURAREA TA
         const firebaseConfig = {
@@ -261,9 +202,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
-        const auth = getAuth(app);
+        // NU mai există Auth aici.
 
-        // VARIABILE GLOBALE
         let currentUser = null;
         let currentRoom = null;
         let skipsAvailable = 2;
@@ -271,7 +211,6 @@
         let myVotes = 5;
         let votedIndices = [];
 
-        // TASKS
         const allTasks = [
             "Fă poză cu 2 oameni random.", "Autograf primit de la cineva.", 
             "Selfie high-five cu un străin.", "Clădire cu arhitectură interesantă.", 
@@ -281,12 +220,11 @@
             "Reflexia ta într-o vitrină.", "Semn stradal amuzant.", "Copac bătrân."
         ];
 
-        // --- 1. PROCESARE IMAGINE (SECRET SANTA STYLE) ---
+        // --- 1. PROCESARE POZĂ ---
         window.processImage = function(input) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 document.getElementById('file-name').innerText = file.name;
-                
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const img = new Image();
@@ -294,14 +232,11 @@
                     img.onload = function() {
                         const canvas = document.getElementById('img-canvas');
                         const ctx = canvas.getContext('2d');
-                        // Redimensionare la max 300px (salvează spațiu și timp)
                         const MAX_WIDTH = 300;
                         const scaleSize = MAX_WIDTH / img.width;
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scaleSize;
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        // Salvăm ca Base64 în input-ul hidden
                         document.getElementById('final-image-base64').value = canvas.toDataURL('image/jpeg', 0.8);
                     }
                 }
@@ -309,46 +244,69 @@
             }
         };
 
-        // Helper pentru hash parolă
+        // Helper: Hash Parolă
         async function hashPassword(password) {
             const encoder = new TextEncoder();
             const data = encoder.encode(password);
             const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        <!-- LOGIN SECTION -->
-        <div id="login-section" class="glass-card">
-            <h2>Identificare</h2>
-            <p style="opacity: 0.8; margin-bottom: 20px;">Hai să vedem cine ești!</p>
-            
-            <input type="text" id="username" placeholder="Nume" required autocomplete="off">
-            <input type="password" id="userpass" placeholder="Parola" required>
-            <!-- AI FIELD: INTERESTS -->
-            <textarea id="interests" placeholder="Ce îți place? (ex: pisici, cafea...) - (Opțional)"></textarea>
-            
-            <div id="upload-area">
-                <div class="file-upload-wrapper">
-                    <label for="file-upload" class="custom-file-upload">
-                        <span>📷</span> Alege o poză
-                    </label>
-                    <input id="file-upload" type="file" accept="image/*" onchange="processImage(this)"/>
-                </div>
-                <p id="file-name" style="font-size: 0.8rem; color: var(--gold); min-height: 1.2em;"></p>
-                <canvas id="img-canvas" style="display: none;"></canvas>
-                <input type="hidden" id="final-image-base64">
-            </div>
+        // --- 2. LOGIN (DIRECT ÎN DB, FĂRĂ AUTH GOOGLE) ---
+        window.handleLogin = async () => {
+            const name = document.getElementById('username').value.trim();
+            const pass = document.getElementById('userpass').value.trim();
+            const imgBase64 = document.getElementById('final-image-base64').value;
+            const msg = document.getElementById('login-msg');
 
-            <button class="btn" onclick="handleLogin()">Intră în Atelier 🎁</button>
-            <p id="login-msg" style="color: #ff8888; font-size: 0.85rem; margin-top: 15px; font-weight: 600; min-height: 1.2em;"></p>
-        </div>
+            if (!name || !pass) { msg.innerText = "Completează Nume și Parolă!"; return; }
 
-                // Setăm userul curent și trecem mai departe
+            const btn = document.querySelector('#login-screen .btn');
+            btn.innerText = "Se verifică în baza de date...";
+            btn.disabled = true;
+
+            try {
+                // Nu mai chemăm signInAnonymously. Verificăm direct DB.
+                const passHash = await hashPassword(pass);
+                const usersRef = collection(db, "users");
+                const q = query(usersRef, where("name", "==", name));
+                const querySnapshot = await getDocs(q);
+
+                let photoURL = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+                if (!querySnapshot.empty) {
+                    // USER EXISTENT
+                    const userData = querySnapshot.docs[0].data();
+                    if (userData.passwordHash && userData.passwordHash !== passHash) {
+                        msg.innerText = "Parolă greșită! Cineva are deja numele ăsta.";
+                        btn.innerText = "Intră în Joc";
+                        btn.disabled = false;
+                        return;
+                    }
+                    photoURL = userData.photo;
+                    
+                    // Update poză dacă e nouă
+                    if(imgBase64) {
+                        const storageRef = ref(storage, `profiles/${name}_${Date.now()}.jpg`);
+                        await uploadString(storageRef, imgBase64, 'data_url');
+                        photoURL = await getDownloadURL(storageRef);
+                        await updateDoc(querySnapshot.docs[0].ref, { photo: photoURL });
+                    }
+                } else {
+                    // USER NOU
+                    if (imgBase64) {
+                        const storageRef = ref(storage, `profiles/${name}_${Date.now()}.jpg`);
+                        await uploadString(storageRef, imgBase64, 'data_url');
+                        photoURL = await getDownloadURL(storageRef);
+                    }
+                    await setDoc(doc(db, "users", name), {
+                        name: name, photo: photoURL, passwordHash: passHash
+                    });
+                }
+
                 currentUser = { name: name, photo: photoURL };
                 document.getElementById('display-name').innerText = name;
                 document.getElementById('user-avatar').src = photoURL;
-                
                 showScreen('lobby-screen');
 
             } catch (error) {
@@ -367,18 +325,18 @@
         // --- 3. ROOM LOGIC ---
         window.createRoom = async () => {
             const roomName = document.getElementById('room-input').value.trim();
-            if (!roomName) return alert("Numele camerei?");
+            if (!roomName) return alert("Scrie numele camerei!");
             try {
                 await setDoc(doc(db, "rooms", roomName), {
                     status: "lobby", players: arrayUnion(currentUser.name), submissions: []
                 });
                 enterRoom(roomName);
-            } catch (e) { alert("Eroare: " + e.message); }
+            } catch (e) { alert("Eroare creare: " + e.message); }
         };
 
         window.joinRoom = async () => {
             const roomName = document.getElementById('room-input').value.trim();
-            if (!roomName) return alert("Numele camerei?");
+            if (!roomName) return alert("Scrie numele camerei!");
             const roomRef = doc(db, "rooms", roomName);
             const snap = await getDoc(roomRef);
             if (snap.exists()) {
@@ -440,8 +398,6 @@
             const card = document.getElementById(taskId);
             card.style.opacity = "0.5";
 
-            // Aici putem folosi tot compresie dacă vrei, dar momentan folosim upload direct
-            // pentru a fi mai simplu la fișiere mari.
             try {
                 const storageRef = ref(storage, `proofs/${currentRoom}/${currentUser.name}/${file.name}_${Date.now()}`);
                 await uploadBytes(storageRef, file);
@@ -479,7 +435,6 @@
             }
         };
 
-        // --- 5. LISTENERS & VOTING ---
         function listenToRoom() {
             onSnapshot(doc(db, "rooms", currentRoom), (docSnap) => {
                 if(!docSnap.exists()) return;
@@ -500,7 +455,6 @@
             const gallery = document.getElementById('voting-gallery');
             gallery.innerHTML = '';
             if(!submissions || submissions.length === 0) { gallery.innerHTML = "<p>Nimic de votat.</p>"; return; }
-            
             submissions.forEach((sub, i) => {
                 if(sub.user !== currentUser.name) {
                     const div = document.createElement('div');
