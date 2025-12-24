@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>City Hunt - Direct</title>
+    <title>City Hunt - Game</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     
@@ -49,24 +49,39 @@
         .gallery img { width: 100%; border-radius: 10px; border: 3px solid transparent; margin-bottom: 10px; }
         .gallery img.selected { border-color: #ffcc00; transform: scale(0.95); }
         .hidden { display: none !important; }
+
+        /* Header Profil Mic */
+        .profile-header {
+            display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px;
+        }
+        .profile-header img {
+            width: 50px; height: 50px; border-radius: 50%; border: 2px solid #ffcc00; object-fit: cover;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="profile-header">
+        <img id="my-avatar" src="">
+        <div>
+            <h3 style="margin:0; font-size:1rem; color:#ccc;">Salut,</h3>
+            <h2 id="my-name" style="margin:0; color:#ffcc00;">...</h2>
+        </div>
+    </div>
+
     <h1>City Hunt 🏙️</h1>
 
     <div id="lobby-screen" class="screen active">
         <div class="glass-card">
-            <img id="my-avatar" style="width:80px; height:80px; border-radius:50%; margin:0 auto; display:block;">
-            <p>Ești logat ca: <b id="my-name" style="color:#ffcc00">...</b></p>
-            
+            <p>Introdu numele camerei pentru a juca cu prietenii:</p>
             <input type="text" id="room-input" placeholder="Nume Cameră (ex: Iasi)">
             
             <div style="display:flex; gap:10px;">
                 <button class="btn" onclick="createRoom()" style="background:#6c5ce7">Creează</button>
                 <button class="btn" onclick="joinRoom()" style="background:#2dc937">Intră</button>
             </div>
+            <button class="btn" onclick="logout()" style="background:transparent; border:1px solid #555; margin-top:20px; font-size:0.9rem;">Ieși din cont</button>
         </div>
     </div>
 
@@ -111,19 +126,35 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // --- AUTO LOGIN (GENERARE AUTOMATĂ) ---
-    const randomId = Math.floor(Math.random() * 10000);
+    // --- INTEGRARE LOGIN (MODIFICAT AICI) ---
+    // Verificăm dacă există datele salvate în login.html
+    const localData = localStorage.getItem('travel_app_user');
+    
+    if (!localData) {
+        // Dacă nu găsim datele, redirectăm utilizatorul la login
+        window.location.href = "login.html";
+        throw new Error("Redirecting to login..."); // Oprește execuția restului scriptului
+    }
+
+    const parsedUser = JSON.parse(localData);
+
+    // Setăm utilizatorul curent cu datele reale
     const currentUser = {
-        name: "Jucator_" + randomId,
-        // Avatar random generat automat
-        photo: `https://api.dicebear.com/7.x/avataaars/svg?seed=${randomId}` 
+        name: parsedUser.name,
+        photo: parsedUser.avatar // În login am salvat ca 'avatar', aici folosim 'photo'
     };
 
-    // Populăm interfața direct la încărcare
+    // Populăm interfața
     document.getElementById('my-name').innerText = currentUser.name;
     document.getElementById('my-avatar').src = currentUser.photo;
 
-    // Variabile joc
+    // Funcție logout
+    window.logout = () => {
+        localStorage.removeItem('travel_app_user');
+        window.location.href = "login.html";
+    }
+
+    // --- LOGICA JOCULUI (Identică cu ce aveai înainte) ---
     let currentRoom = null;
     let skips = 2;
     let tasksDone = 0;
@@ -214,36 +245,33 @@
         document.querySelectorAll('.btn-skip').forEach(b => b.innerText = `Skip (${skips})`);
     };
 
-    // --- UPLOAD CU COMPRESIE (LOGICA SECRET SANTA) ---
+    // --- UPLOAD ---
     window.processAndUpload = (id, input) => {
         if (input.files && input.files[0]) {
             const file = input.files[0];
             const reader = new FileReader();
             const card = document.getElementById(id);
-            card.style.opacity = "0.5"; // Arata ca lucreaza
+            card.style.opacity = "0.5"; 
 
             reader.onload = function(e) {
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = async function() {
-                    // 1. Resize in browser
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    const MAX_WIDTH = 500; // Calitate ok
+                    const MAX_WIDTH = 500; 
                     const scaleSize = MAX_WIDTH / img.width;
                     canvas.width = MAX_WIDTH;
                     canvas.height = img.height * scaleSize;
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     const dataURL = canvas.toDataURL('image/jpeg', 0.8);
 
-                    // 2. Upload la Firebase
                     try {
                         const fileName = `proofs/${currentRoom}/${currentUser.name}_${Date.now()}.jpg`;
                         const storageRef = ref(storage, fileName);
                         await uploadString(storageRef, dataURL, 'data_url');
                         const url = await getDownloadURL(storageRef);
 
-                        // 3. Save in DB
                         const taskTxt = card.querySelector('b').innerText;
                         await updateDoc(doc(db, "rooms", currentRoom), {
                             submissions: arrayUnion({
