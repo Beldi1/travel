@@ -88,7 +88,6 @@
         }
         .room-chip:hover { background: #6c5ce7; }
 
-        /* Waiting List Styles */
         .player-status {
             display: flex; justify-content: space-between; align-items: center;
             padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -143,7 +142,8 @@
         <h3 id="room-display" style="color:#ffcc00; margin-top: 30px;"></h3>
         <div id="tasks-container"></div>
         
-        <button id="more-btn" class="btn hidden" onclick="loadOneExtraTask()" style="background:#6c5ce7">➕ Task Nou (Max 5)</button>
+        <button id="more-btn" class="btn hidden" onclick="loadOneExtraTask()" style="background:#6c5ce7">➕ Cere Task Nou (Max 10)</button>
+        
         <button id="finish-btn" class="btn hidden" onclick="finishGameForMe()" style="background:orange">✅ Am terminat!</button>
     </div>
 
@@ -151,9 +151,7 @@
         <button class="back-btn" onclick="exitRoom()">⬅ Ieși</button>
         <h2 style="margin-top:30px;">⏳ Așteptăm...</h2>
         <p style="font-size:0.9rem; opacity:0.8; margin-bottom:20px;">Jocul continuă până când toată lumea termină.</p>
-        
-        <div id="waiting-list" style="text-align:left;">
-            </div>
+        <div id="waiting-list" style="text-align:left;"></div>
     </div>
 
     <div id="voting-screen" class="screen glass-card">
@@ -227,15 +225,10 @@
                 currentUser = { name: parsedUser.name, photo: parsedUser.avatar };
                 document.getElementById('my-name').innerText = currentUser.name;
                 document.getElementById('my-avatar').src = currentUser.photo;
-                
                 renderRecentRooms();
-
                 const savedRoom = localStorage.getItem('travel_app_room');
-                if(savedRoom) {
-                    joinRoomLogic(savedRoom);
-                } else {
-                    document.getElementById('security-overlay').style.display = 'none';
-                }
+                if(savedRoom) { joinRoomLogic(savedRoom); } 
+                else { document.getElementById('security-overlay').style.display = 'none'; }
             }
         } catch (error) { console.error(error); alert("Eroare conexiune."); }
     }
@@ -274,12 +267,8 @@
         const rName = document.getElementById('room-input').value.trim();
         if(!rName) return alert("Scrie numele camerei!");
         try {
-            // Adăugăm câmpul finishedPlayers la creare
             await setDoc(doc(db, "rooms", rName), { 
-                status: "lobby", 
-                players: [currentUser.name], 
-                submissions: [],
-                finishedPlayers: [] 
+                status: "lobby", players: [currentUser.name], submissions: [], finishedPlayers: [] 
             });
             saveRoomAndJoin(rName);
         } catch(e) { alert("Eroare: " + e.message); }
@@ -307,40 +296,28 @@
         document.getElementById('room-display').innerText = "Camera: " + rName;
         document.getElementById('security-overlay').style.display = 'none';
         
-        // Listen to DB
         onSnapshot(doc(db, "rooms", currentRoom), (s) => {
             const d = s.data();
             if(!d) return;
 
-            // 1. Daca suntem in faza de joc
             if(d.status === 'lobby' || d.status === 'playing') { 
-                // Verificăm dacă EU am terminat deja
                 if(d.finishedPlayers && d.finishedPlayers.includes(currentUser.name)) {
                     renderWaitingScreen(d.players, d.finishedPlayers);
                     document.getElementById('game-screen').classList.remove('active');
                     document.getElementById('waiting-screen').classList.add('active');
                     document.getElementById('lobby-screen').classList.remove('active');
                 } else {
-                    // Sunt in joc
                     renderTasksAndSync(d.submissions || []);
                     document.getElementById('lobby-screen').classList.remove('active');
                     document.getElementById('waiting-screen').classList.remove('active');
                     document.getElementById('game-screen').classList.add('active');
                 }
 
-                // Logica de tranzitie automata: Daca TOTI au terminat -> VOTING
-                // Facem check-ul doar daca eu sunt ultimul care a intrat in lista, ca sa nu facem write-uri multiple
+                // Check daca toti au terminat
                 if(d.finishedPlayers && d.players && d.finishedPlayers.length === d.players.length && d.players.length > 0) {
-                     // Trecem la voting
-                     // Un singur client trebuie sa faca asta, dar Firestore handleuie ok concurenta
-                     // Pentru siguranta, o lasam sa ruleze la toti, cine scrie primul castiga
-                     if(d.status !== 'voting') {
-                        updateDoc(doc(db, "rooms", currentRoom), { status: 'voting' });
-                     }
+                     if(d.status !== 'voting') { updateDoc(doc(db, "rooms", currentRoom), { status: 'voting' }); }
                 }
             }
-            
-            // 2. Faza de Voting
             else if(d.status === 'voting') {
                 setupVoting(d.submissions);
                 document.getElementById('lobby-screen').classList.remove('active');
@@ -348,8 +325,6 @@
                 document.getElementById('waiting-screen').classList.remove('active');
                 document.getElementById('voting-screen').classList.add('active');
             } 
-            
-            // 3. Rezultate
             else if(d.status === 'finished') {
                 setupResults(d.submissions);
                 document.getElementById('voting-screen').classList.remove('active');
@@ -358,21 +333,14 @@
         });
     }
 
-    // --- RENDER WAITING LIST ---
     function renderWaitingScreen(allPlayers, finishedPlayers) {
         const list = document.getElementById('waiting-list');
         list.innerHTML = '';
-        
         allPlayers.forEach(p => {
             const isDone = finishedPlayers.includes(p);
             const div = document.createElement('div');
             div.className = 'player-status';
-            div.innerHTML = `
-                <span>${p}</span>
-                <span class="status-badge ${isDone ? 'status-ready' : 'status-playing'}">
-                    ${isDone ? '✅ Gata' : '🎮 Joacă'}
-                </span>
-            `;
+            div.innerHTML = `<span>${p}</span><span class="status-badge ${isDone ? 'status-ready' : 'status-playing'}">${isDone ? '✅ Gata' : '🎮 Joacă'}</span>`;
             list.appendChild(div);
         });
     }
@@ -382,7 +350,7 @@
         const container = document.getElementById('tasks-container');
         const savedTasks = localStorage.getItem('travel_app_tasks');
         if (savedTasks) { currentLocalTasks = JSON.parse(savedTasks); } 
-        else { generateNewLocalTasks(5); }
+        else { generateNewLocalTasks(5); } // Start doar cu 5
 
         let html = "";
         let completedCount = 0;
@@ -394,16 +362,9 @@
             if (sub) {
                 completedCount++;
                 if(sub.photo.startsWith("data:image/png;base64,FAIL")) {
-                     html += `
-                    <div class="task-card failed">
-                        <b>❌ ${t} (Eșuat)</b>
-                    </div>`;
+                     html += `<div class="task-card failed"><b>❌ ${t} (Eșuat)</b></div>`;
                 } else {
-                     html += `
-                    <div class="task-card completed">
-                        <b>✅ ${t}</b>
-                        <img src="${sub.photo}" width="100%" style="border-radius:10px; margin-top:5px;">
-                    </div>`;
+                     html += `<div class="task-card completed"><b>✅ ${t}</b><img src="${sub.photo}" width="100%" style="border-radius:10px; margin-top:5px;"></div>`;
                 }
             } else {
                 let actionBtn = '';
@@ -426,17 +387,21 @@
         });
         container.innerHTML = html;
 
-        // Arătăm butoanele doar dacă s-au făcut cel puțin 5 task-uri
+        // LOGICA DE AFISARE BUTOANE:
+        // Doar daca ai terminat (sau esuat) primele 5 task-uri
         if(completedCount >= 5) {
-            // Butonul "Finish" apare
             document.getElementById('finish-btn').classList.remove('hidden');
             
-            // Butonul "+1 Task" apare doar dacă nu am atins limita de 10 (5 start + 5 extra)
+            // Butonul de adaugare task apare DOAR DACA nu ai depasit limita de 10
             if(currentLocalTasks.length < 10) {
                 document.getElementById('more-btn').classList.remove('hidden');
             } else {
                 document.getElementById('more-btn').classList.add('hidden');
             }
+        } else {
+            // Ascundem butoanele daca userul nu a terminat minimul de 5
+            document.getElementById('finish-btn').classList.add('hidden');
+            document.getElementById('more-btn').classList.add('hidden');
         }
     }
 
@@ -447,34 +412,21 @@
         localStorage.setItem('travel_app_tasks', JSON.stringify(currentLocalTasks));
     }
 
-    // --- NEW: ADDS ONLY 1 TASK (MAX 5 EXTRAS) ---
+    // --- NEW: ADDS 1 TASK ---
     window.loadOneExtraTask = () => {
-        // Limita maximă: 5 inițiale + 5 extra = 10
-        if(currentLocalTasks.length >= 10) {
-            alert("Ai atins limita maximă de task-uri suplimentare!");
-            document.getElementById('more-btn').classList.add('hidden');
-            return;
-        }
+        if(currentLocalTasks.length >= 10) return; // Max limit
 
         const shuffled = [...allTasks].sort(() => 0.5 - Math.random());
-        // Găsim 1 task care nu e deja în listă
         let newTask = null;
         for(let t of shuffled) {
-            if(!currentLocalTasks.includes(t)) {
-                newTask = t;
-                break;
-            }
+            if(!currentLocalTasks.includes(t)) { newTask = t; break; }
         }
 
         if(newTask) {
             currentLocalTasks.push(newTask);
             localStorage.setItem('travel_app_tasks', JSON.stringify(currentLocalTasks));
-            
-            // Update UI
             const ref = doc(db, "rooms", currentRoom);
             getDoc(ref).then(s => renderTasksAndSync(s.data().submissions || []));
-        } else {
-            alert("Nu mai sunt task-uri disponibile!");
         }
     }
 
@@ -492,36 +444,27 @@
         }
     }
 
-    // --- NO CONFIRM FAIL ---
     window.markAsFailed = async (domId, taskText) => {
-        // Fără confirmare, direct execuție
+        // Fara confirmare
         const canvas = document.createElement('canvas');
         canvas.width = 300; canvas.height = 150;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = "#f8d7da"; ctx.fillRect(0, 0, 300, 150);
         ctx.font = "bold 40px Arial"; ctx.fillStyle = "#dc3545";
         ctx.textAlign = "center"; ctx.fillText("TASK EȘUAT ❌", 150, 85);
-
         const failImage = canvas.toDataURL('image/png').replace("data:image/png", "data:image/png;base64,FAIL"); 
 
         try {
             await updateDoc(doc(db, "rooms", currentRoom), {
-                submissions: arrayUnion({
-                    user: currentUser.name, photo: failImage, task: taskText, votes: -100
-                })
+                submissions: arrayUnion({ user: currentUser.name, photo: failImage, task: taskText, votes: -100 })
             });
         } catch(e) { alert("Eroare: " + e.message); }
     }
 
-    // --- FINISH FOR ME (WAITING ROOM) ---
     window.finishGameForMe = async () => {
         if(!confirm("Sigur ai terminat? Vei aștepta ceilalți jucători.")) return;
-        
         try {
-            await updateDoc(doc(db, "rooms", currentRoom), {
-                finishedPlayers: arrayUnion(currentUser.name)
-            });
-            // UI-ul se va updata automat via onSnapshot -> renderWaitingScreen
+            await updateDoc(doc(db, "rooms", currentRoom), { finishedPlayers: arrayUnion(currentUser.name) });
         } catch(e) { console.error(e); alert("Eroare la finalizare."); }
     }
 
@@ -599,12 +542,7 @@
             const isFailed = s.photo.includes("FAIL");
             let imgHTML = `<img src="${s.photo}" width="100%" style="border-radius:10px;">`;
             if(isFailed) { imgHTML = `<div style="background:#f8d7da; color:#721c24; padding:20px; border-radius:10px; font-weight:bold;">❌ TASK EȘUAT</div>`; }
-
-            l.innerHTML += `<div class="glass-card">
-                <h3>#${i+1} ${s.user} (${s.votes} voturi)</h3>
-                ${imgHTML}
-                <p>${s.task}</p>
-            </div>`;
+            l.innerHTML += `<div class="glass-card"><h3>#${i+1} ${s.user} (${s.votes} voturi)</h3>${imgHTML}<p>${s.task}</p></div>`;
         });
     }
 </script>
