@@ -318,67 +318,31 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // --- 2. LOGIN (LOGICA NOUĂ) ---
-        window.handleLogin = async () => {
-            const name = document.getElementById('username').value.trim();
-            const pass = document.getElementById('userpass').value.trim();
-            const imgBase64 = document.getElementById('final-image-base64').value;
-            const msg = document.getElementById('login-msg');
+        <!-- LOGIN SECTION -->
+        <div id="login-section" class="glass-card">
+            <h2>Identificare</h2>
+            <p style="opacity: 0.8; margin-bottom: 20px;">Hai să vedem cine ești!</p>
+            
+            <input type="text" id="username" placeholder="Nume" required autocomplete="off">
+            <input type="password" id="userpass" placeholder="Parola" required>
+            <!-- AI FIELD: INTERESTS -->
+            <textarea id="interests" placeholder="Ce îți place? (ex: pisici, cafea...) - (Opțional)"></textarea>
+            
+            <div id="upload-area">
+                <div class="file-upload-wrapper">
+                    <label for="file-upload" class="custom-file-upload">
+                        <span>📷</span> Alege o poză
+                    </label>
+                    <input id="file-upload" type="file" accept="image/*" onchange="processImage(this)"/>
+                </div>
+                <p id="file-name" style="font-size: 0.8rem; color: var(--gold); min-height: 1.2em;"></p>
+                <canvas id="img-canvas" style="display: none;"></canvas>
+                <input type="hidden" id="final-image-base64">
+            </div>
 
-            if (!name || !pass) { msg.innerText = "Completează Nume și Parolă!"; return; }
-
-            const btn = document.querySelector('#login-screen .btn');
-            btn.innerText = "Se verifică...";
-            btn.disabled = true;
-
-            try {
-                // 1. Auth Anonim (obligatoriu pt Firebase Rules)
-                await signInAnonymously(auth);
-
-                // 2. Hash Parolă
-                const passHash = await hashPassword(pass);
-
-                // 3. Verificăm dacă userul există
-                const usersRef = collection(db, "users");
-                const q = query(usersRef, where("name", "==", name));
-                const querySnapshot = await getDocs(q);
-
-                let photoURL = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-
-                if (!querySnapshot.empty) {
-                    // USER EXISTENT -> Verifică parola
-                    const userData = querySnapshot.docs[0].data();
-                    if (userData.passwordHash && userData.passwordHash !== passHash) {
-                        msg.innerText = "Parolă greșită pentru acest nume!";
-                        btn.innerText = "Intră în Joc";
-                        btn.disabled = false;
-                        return;
-                    }
-                    photoURL = userData.photo; // Păstrăm poza veche
-                    
-                    // (Opțional) Dacă userul a urcat o poză nouă acum, o actualizăm
-                    if(imgBase64) {
-                        const storageRef = ref(storage, `profiles/${name}_${Date.now()}.jpg`);
-                        await uploadString(storageRef, imgBase64, 'data_url');
-                        photoURL = await getDownloadURL(storageRef);
-                        await updateDoc(querySnapshot.docs[0].ref, { photo: photoURL });
-                    }
-                } else {
-                    // USER NOU -> Creăm cont
-                    if (imgBase64) {
-                        // Uploadăm imaginea procesată în Storage
-                        const storageRef = ref(storage, `profiles/${name}_${Date.now()}.jpg`);
-                        await uploadString(storageRef, imgBase64, 'data_url');
-                        photoURL = await getDownloadURL(storageRef);
-                    }
-                    
-                    // Salvăm în Firestore
-                    await setDoc(doc(db, "users", name), {
-                        name: name,
-                        photo: photoURL,
-                        passwordHash: passHash
-                    });
-                }
+            <button class="btn" onclick="handleLogin()">Intră în Atelier 🎁</button>
+            <p id="login-msg" style="color: #ff8888; font-size: 0.85rem; margin-top: 15px; font-weight: 600; min-height: 1.2em;"></p>
+        </div>
 
                 // Setăm userul curent și trecem mai departe
                 currentUser = { name: name, photo: photoURL };
