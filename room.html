@@ -15,6 +15,20 @@
         }
         .container { width: 95%; max-width: 500px; padding: 20px; text-align: center; margin-top: 20px; }
         
+        /* --- SECURITATE: LOADING SCREEN --- */
+        #security-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .loader {
+            border: 4px solid #333; border-top: 4px solid #ff3b3f;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; mb-3;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         /* Ecrane */
         .screen { display: none; animation: fadeIn 0.5s; }
         .screen.active { display: block; }
@@ -50,7 +64,6 @@
         .gallery img.selected { border-color: #ffcc00; transform: scale(0.95); }
         .hidden { display: none !important; }
 
-        /* Header Profil Mic */
         .profile-header {
             display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px;
         }
@@ -60,6 +73,11 @@
     </style>
 </head>
 <body>
+
+<div id="security-overlay">
+    <div class="loader"></div>
+    <p style="margin-top:20px; color:#fff;">Verificăm accesul...</p>
+</div>
 
 <div class="container">
     <div class="profile-header">
@@ -109,10 +127,9 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
-    // --- CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyAkMDbDQVyWqeOKlyB9n7_93q7f6RuHiX0",
         authDomain: "secret-santa-ce9e0.firebaseapp.com",
@@ -125,36 +142,69 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const storage = getStorage(app);
+    const usersCollection = collection(db, "users");
 
-    // --- INTEGRARE LOGIN (MODIFICAT AICI) ---
-    // Verificăm dacă există datele salvate în login.html
-    const localData = localStorage.getItem('travel_app_user');
-    
-    if (!localData) {
-        // Dacă nu găsim datele, redirectăm utilizatorul la login
-        window.location.href = "login.html";
-        throw new Error("Redirecting to login..."); // Oprește execuția restului scriptului
+    // --- LOGICA DE SECURITATE (CHECK DB) ---
+    let currentUser = null;
+
+    async function checkAuth() {
+        const localData = localStorage.getItem('travel_app_user');
+        
+        // 1. Dacă nu are nimic în browser -> PA!
+        if (!localData) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        const parsedUser = JSON.parse(localData);
+
+        try {
+            // 2. Verificăm în baza de date dacă userul există ȘI are parola hash corectă
+            // Asta previne intrarea cuiva care și-a modificat manual localStorage-ul
+            const q = query(usersCollection, 
+                where("name", "==", parsedUser.name),
+                where("passwordHash", "==", parsedUser.passwordHash) 
+            );
+            
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                // Dacă nu există în DB -> Ștergem datele locale false și redirectăm
+                localStorage.removeItem('travel_app_user');
+                alert("Sesiune invalidă! Te rog să te loghezi din nou.");
+                window.location.href = "login.html";
+            } else {
+                // 3. Totul e OK -> Scoatem ecranul de securitate și populăm datele
+                currentUser = {
+                    name: parsedUser.name,
+                    photo: parsedUser.avatar
+                };
+                
+                // Actualizăm UI
+                document.getElementById('my-name').innerText = currentUser.name;
+                document.getElementById('my-avatar').src = currentUser.photo;
+                
+                // Ascundem loader-ul
+                document.getElementById('security-overlay').style.display = 'none';
+            }
+
+        } catch (error) {
+            console.error("Eroare verificare:", error);
+            alert("Eroare la conectare server.");
+            // În caz de eroare gravă de rețea, rămâne pe loading sau îl poți trimite la login
+        }
     }
 
-    const parsedUser = JSON.parse(localData);
+    // Rulăm verificarea imediat ce se încarcă scriptul
+    checkAuth();
 
-    // Setăm utilizatorul curent cu datele reale
-    const currentUser = {
-        name: parsedUser.name,
-        photo: parsedUser.avatar // În login am salvat ca 'avatar', aici folosim 'photo'
-    };
-
-    // Populăm interfața
-    document.getElementById('my-name').innerText = currentUser.name;
-    document.getElementById('my-avatar').src = currentUser.photo;
-
-    // Funcție logout
+    // --- LOGICA JOCULUI (Standard) ---
+    
     window.logout = () => {
         localStorage.removeItem('travel_app_user');
         window.location.href = "login.html";
     }
 
-    // --- LOGICA JOCULUI (Identică cu ce aveai înainte) ---
     let currentRoom = null;
     let skips = 2;
     let tasksDone = 0;
@@ -169,7 +219,6 @@
         "Reflexie în vitrină.", "Semn stradal amuzant.", "Copac bătrân."
     ];
 
-    // --- CAMERE ---
     window.createRoom = async () => {
         const rName = document.getElementById('room-input').value.trim();
         if(!rName) return alert("Scrie numele camerei!");
@@ -213,7 +262,6 @@
         });
     }
 
-    // --- JOC ---
     window.startGame = () => {
         document.getElementById('start-btn').classList.add('hidden');
         genTasks(5);
@@ -245,7 +293,6 @@
         document.querySelectorAll('.btn-skip').forEach(b => b.innerText = `Skip (${skips})`);
     };
 
-    // --- UPLOAD ---
     window.processAndUpload = (id, input) => {
         if (input.files && input.files[0]) {
             const file = input.files[0];
@@ -304,7 +351,6 @@
         if(confirm("Toți trec la vot?")) await updateDoc(doc(db, "rooms", currentRoom), { status: "voting" });
     }
 
-    // --- VOTARE ---
     function setupVoting(subs) {
         const g = document.getElementById('gallery'); g.innerHTML = "";
         if(!subs || subs.length === 0) return;
