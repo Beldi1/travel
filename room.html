@@ -70,24 +70,35 @@
             width: 50px; height: 50px; border-radius: 50%; border: 2px solid #ffcc00; object-fit: cover;
         }
 
-        /* --- UI NOU --- */
-        .back-btn {
-            position: absolute; top: 20px; left: 10px;
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-            color: white; padding: 5px 10px; border-radius: 10px; cursor: pointer; font-size: 0.8rem;
-            display: flex; align-items: center; gap: 5px;
+        /* --- NOTIFICARE TOAST (New Player) --- */
+        .toast-notification {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(45, 201, 55, 0.9); backdrop-filter: blur(5px);
+            color: white; padding: 12px 20px; border-radius: 30px;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 10000;
+            opacity: 0; pointer-events: none; transition: 0.5s;
+            margin-top: -50px; /* Hidden initially */
         }
-        
-        .recent-rooms-container {
-            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px;
+        .toast-notification.show {
+            opacity: 1; margin-top: 0;
         }
-        .room-chip {
-            background: rgba(108, 92, 231, 0.3); border: 1px solid #6c5ce7;
-            padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; cursor: pointer;
-            transition: 0.2s;
+        .toast-img {
+            width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; object-fit: cover;
         }
-        .room-chip:hover { background: #6c5ce7; }
 
+        /* --- LOBBY PLAYER LIST --- */
+        .lobby-list {
+            display: flex; flex-direction: column; gap: 10px; margin-top: 20px;
+        }
+        .lobby-player {
+            display: flex; align-items: center; gap: 10px; 
+            background: rgba(255,255,255,0.05); padding: 10px; border-radius: 15px;
+        }
+        .lobby-player img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+
+        /* Waiting List Styles */
         .player-status {
             display: flex; justify-content: space-between; align-items: center;
             padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -97,6 +108,12 @@
         }
         .status-playing { background: #555; color: #ccc; }
         .status-ready { background: #2dc937; color: white; }
+        
+        .back-btn {
+            position: absolute; top: 20px; left: 10px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 5px 10px; border-radius: 10px; cursor: pointer; font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -104,6 +121,13 @@
 <div id="security-overlay">
     <div class="loader"></div>
     <p style="color:#fff;">Se încarcă...</p>
+</div>
+
+<div id="player-toast" class="toast-notification">
+    <img id="toast-img" src="" class="toast-img">
+    <div>
+        <b id="toast-name">Nume</b> a intrat!
+    </div>
 </div>
 
 <div class="container">
@@ -119,17 +143,33 @@
 
     <div id="lobby-screen" class="screen active">
         <div class="glass-card">
-            <p>Introdu numele camerei:</p>
-            <input type="text" id="room-input" placeholder="Nume Cameră (ex: Iasi)">
-            
-            <div style="display:flex; gap:10px;">
-                <button class="btn" onclick="createRoom()" style="background:#6c5ce7">Creează</button>
-                <button class="btn" onclick="joinRoom()" style="background:#2dc937">Intră</button>
+            <div id="lobby-inputs">
+                <p>Introdu numele camerei:</p>
+                <input type="text" id="room-input" placeholder="Nume Cameră (ex: Iasi)">
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" onclick="createRoom()" style="background:#6c5ce7">Creează</button>
+                    <button class="btn" onclick="joinRoom()" style="background:#2dc937">Intră</button>
+                </div>
+                <div id="recent-area" style="margin-top:20px; display:none;">
+                     <p style="font-size:0.8rem; opacity:0.7;">Camere recente:</p>
+                     <div id="recent-rooms-list" style="display:flex; gap:5px; justify-content:center;"></div>
+                </div>
             </div>
-            
-            <div id="recent-area" style="margin-top:20px; display:none;">
-                <p style="font-size:0.8rem; opacity:0.7; margin-bottom:5px;">Camere accesate recent:</p>
-                <div id="recent-rooms-list" class="recent-rooms-container"></div>
+
+            <div id="lobby-waiting" class="hidden">
+                <h3 id="lobby-room-name" style="color:#ffcc00"></h3>
+                <p style="font-size:0.9rem; opacity:0.8">Așteptăm jucătorii...</p>
+                
+                <div id="lobby-player-list" class="lobby-list">
+                    </div>
+
+                <div id="admin-controls" class="hidden" style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px;">
+                    <p>👑 Ești Admin!</p>
+                    <button class="btn" onclick="startGameByAdmin()" style="background:orange; animation: pulse 2s infinite;">START JOC</button>
+                </div>
+                <p id="waiting-msg" class="hidden" style="margin-top:20px; color:#aaa; font-style:italic;">Așteptăm ca adminul să pornească jocul...</p>
+                
+                <button class="btn" onclick="exitRoom()" style="background:transparent; border:1px solid #555; margin-top:20px; font-size:0.8rem;">Ieși din cameră</button>
             </div>
 
             <button class="btn" onclick="logout()" style="background:transparent; border:1px solid #555; margin-top:30px; font-size:0.9rem;">Delogare</button>
@@ -137,20 +177,17 @@
     </div>
 
     <div id="game-screen" class="screen">
-        <button class="back-btn" onclick="exitRoom()">⬅ Înapoi</button>
-        
+        <button class="back-btn" onclick="exitRoom()">⬅ Ieși</button>
         <h3 id="room-display" style="color:#ffcc00; margin-top: 30px;"></h3>
         <div id="tasks-container"></div>
-        
         <button id="more-btn" class="btn hidden" onclick="loadOneExtraTask()" style="background:#6c5ce7">➕ Cere Task Nou (Max 10)</button>
-        
         <button id="finish-btn" class="btn hidden" onclick="finishGameForMe()" style="background:orange">✅ Am terminat!</button>
     </div>
 
     <div id="waiting-screen" class="screen glass-card">
         <button class="back-btn" onclick="exitRoom()">⬅ Ieși</button>
         <h2 style="margin-top:30px;">⏳ Așteptăm...</h2>
-        <p style="font-size:0.9rem; opacity:0.8; margin-bottom:20px;">Tu ai terminat! Așteptăm să termine și restul prietenilor.</p>
+        <p style="font-size:0.9rem; opacity:0.8; margin-bottom:20px;">Tu ai terminat! Așteptăm să termine TOȚI ceilalți.</p>
         <div id="waiting-list" style="text-align:left;"></div>
     </div>
 
@@ -208,6 +245,7 @@
     let skips = 2; 
     let myVotes = 5;
     let votedIdx = [];
+    let previousPlayerCount = 0; // Pentru a detecta jucători noi
 
     // --- INIT ---
     async function initApp() {
@@ -241,10 +279,9 @@
         let recent = JSON.parse(localStorage.getItem('travel_recent_rooms') || '[]');
         recent = recent.filter(r => r !== rName);
         recent.unshift(rName);
-        if(recent.length > 6) recent.pop();
+        if(recent.length > 3) recent.pop();
         localStorage.setItem('travel_recent_rooms', JSON.stringify(recent));
     }
-
     function renderRecentRooms() {
         let recent = JSON.parse(localStorage.getItem('travel_recent_rooms') || '[]');
         const container = document.getElementById('recent-rooms-list');
@@ -254,12 +291,21 @@
             container.innerHTML = '';
             recent.forEach(r => {
                 const chip = document.createElement('div');
-                chip.className = 'room-chip';
+                chip.style.cssText = "background:rgba(108, 92, 231, 0.3); border:1px solid #6c5ce7; padding:5px 12px; border-radius:20px; font-size:0.8rem; cursor:pointer;";
                 chip.innerText = r;
                 chip.onclick = () => { document.getElementById('room-input').value = r; joinRoom(); };
                 container.appendChild(chip);
             });
         }
+    }
+
+    // --- NOTIFICARE TOAST ---
+    function showPlayerToast(name, photo) {
+        const toast = document.getElementById('player-toast');
+        document.getElementById('toast-img').src = photo;
+        document.getElementById('toast-name').innerText = name;
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 4000);
     }
 
     // --- ROOM LOGIC ---
@@ -268,7 +314,11 @@
         if(!rName) return alert("Scrie numele camerei!");
         try {
             await setDoc(doc(db, "rooms", rName), { 
-                status: "lobby", players: [currentUser.name], submissions: [], finishedPlayers: [] 
+                status: "lobby", 
+                admin: currentUser.name, // ADMIN SETAT
+                players: [currentUser], // Salvăm obiectul complet
+                submissions: [], 
+                finishedPlayers: [] 
             });
             saveRoomAndJoin(rName);
         } catch(e) { alert("Eroare: " + e.message); }
@@ -280,7 +330,12 @@
         const ref = doc(db, "rooms", rName);
         const snap = await getDoc(ref);
         if(snap.exists()) {
-            await updateDoc(ref, { players: arrayUnion(currentUser.name) });
+            // Verificăm dacă userul e deja în listă ca să nu îl dublăm
+            const currentData = snap.data();
+            const alreadyIn = currentData.players.some(p => p.name === currentUser.name);
+            if(!alreadyIn) {
+                await updateDoc(ref, { players: arrayUnion(currentUser) });
+            }
             saveRoomAndJoin(rName);
         } else { alert("Nu există camera!"); }
     };
@@ -294,40 +349,70 @@
     function joinRoomLogic(rName) {
         currentRoom = rName;
         document.getElementById('room-display').innerText = "Camera: " + rName;
+        document.getElementById('lobby-room-name').innerText = "Lobby: " + rName;
         document.getElementById('security-overlay').style.display = 'none';
         
+        // Ascundem inputurile initiale
+        document.getElementById('lobby-inputs').classList.add('hidden');
+        document.getElementById('lobby-waiting').classList.remove('hidden');
+
         onSnapshot(doc(db, "rooms", currentRoom), (s) => {
             const d = s.data();
             if(!d) return;
 
-            // 1. FAZA DE JOC
-            if(d.status === 'lobby' || d.status === 'playing') { 
-                // Verificăm dacă EU am terminat
-                const iHaveFinished = d.finishedPlayers && d.finishedPlayers.includes(currentUser.name);
+            // 1. FAZA DE LOBBY
+            if(d.status === 'lobby') {
+                // Render lista playeri
+                const list = document.getElementById('lobby-player-list');
+                list.innerHTML = '';
+                d.players.forEach(p => {
+                    const isAdmin = p.name === d.admin;
+                    list.innerHTML += `<div class="lobby-player"><img src="${p.photo}"><span>${p.name} ${isAdmin ? '👑' : ''}</span></div>`;
+                });
 
-                if(iHaveFinished) {
-                    // Eu aștept
+                // Detectare jucător nou pentru Notificare
+                if (d.players.length > previousPlayerCount && previousPlayerCount !== 0) {
+                    const newPlayer = d.players[d.players.length - 1];
+                    // Nu îmi arăta mie notificare despre mine când intru
+                    if (newPlayer.name !== currentUser.name) {
+                        showPlayerToast(newPlayer.name, newPlayer.photo);
+                    }
+                }
+                previousPlayerCount = d.players.length;
+
+                // Logica Admin
+                if(d.admin === currentUser.name) {
+                    document.getElementById('admin-controls').classList.remove('hidden');
+                    document.getElementById('waiting-msg').classList.add('hidden');
+                } else {
+                    document.getElementById('admin-controls').classList.add('hidden');
+                    document.getElementById('waiting-msg').classList.remove('hidden');
+                }
+            } 
+            // 2. FAZA DE JOC
+            else if(d.status === 'playing') {
+                document.getElementById('lobby-screen').classList.remove('active');
+                
+                // Verificăm dacă am terminat eu
+                if(d.finishedPlayers && d.finishedPlayers.includes(currentUser.name)) {
                     renderWaitingScreen(d.players, d.finishedPlayers);
                     document.getElementById('game-screen').classList.remove('active');
                     document.getElementById('waiting-screen').classList.add('active');
-                    document.getElementById('lobby-screen').classList.remove('active');
                 } else {
-                    // Eu joc
                     renderTasksAndSync(d.submissions || []);
-                    document.getElementById('lobby-screen').classList.remove('active');
                     document.getElementById('waiting-screen').classList.remove('active');
                     document.getElementById('game-screen').classList.add('active');
                 }
 
-                // Verificăm dacă TOȚI au terminat
-                if(d.finishedPlayers && d.players && d.finishedPlayers.length >= d.players.length && d.players.length > 0) {
-                     // Dacă eu sunt ultimul care a dat finish, eu triggeruiesc schimbarea
-                     if(d.status !== 'voting') { 
+                // TRANZIȚIE VOTARE: DOAR DACĂ TOȚI AU TERMINAT
+                if(d.finishedPlayers && d.players && d.finishedPlayers.length === d.players.length && d.players.length > 0) {
+                    if(d.status !== 'voting') { 
+                        // Doar adminul sau primul dă trigger, dar aici lăsăm deschis că Firestore face merge
                         updateDoc(doc(db, "rooms", currentRoom), { status: 'voting' }); 
-                     }
+                    }
                 }
             }
-            // 2. FAZA DE VOTARE
+            // 3. FAZA DE VOTARE
             else if(d.status === 'voting') {
                 setupVoting(d.submissions);
                 document.getElementById('lobby-screen').classList.remove('active');
@@ -335,7 +420,7 @@
                 document.getElementById('waiting-screen').classList.remove('active');
                 document.getElementById('voting-screen').classList.add('active');
             } 
-            // 3. FAZA DE REZULTATE
+            // 4. FAZA DE REZULTATE
             else if(d.status === 'finished') {
                 setupResults(d.submissions);
                 document.getElementById('voting-screen').classList.remove('active');
@@ -344,14 +429,28 @@
         });
     }
 
+    // --- ADMIN START ---
+    window.startGameByAdmin = async () => {
+        try {
+            await updateDoc(doc(db, "rooms", currentRoom), { status: 'playing' });
+        } catch(e) { alert("Eroare start: " + e.message); }
+    }
+
+    // --- WAITING SCREEN LIST ---
     function renderWaitingScreen(allPlayers, finishedPlayers) {
         const list = document.getElementById('waiting-list');
         list.innerHTML = '';
         allPlayers.forEach(p => {
-            const isDone = (finishedPlayers || []).includes(p);
+            const isDone = (finishedPlayers || []).includes(p.name);
             const div = document.createElement('div');
             div.className = 'player-status';
-            div.innerHTML = `<span>${p}</span><span class="status-badge ${isDone ? 'status-ready' : 'status-playing'}">${isDone ? '✅ Gata' : '🎮 Joacă'}</span>`;
+            div.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <img src="${p.photo}" style="width:30px; height:30px; border-radius:50%;">
+                    <span>${p.name}</span>
+                </div>
+                <span class="status-badge ${isDone ? 'status-ready' : 'status-playing'}">${isDone ? '✅ Gata' : '🎮 Joacă'}</span>
+            `;
             list.appendChild(div);
         });
     }
@@ -360,9 +459,8 @@
     function renderTasksAndSync(dbSubmissions) {
         const container = document.getElementById('tasks-container');
         const savedTasks = localStorage.getItem('travel_app_tasks');
-        
         if (savedTasks) { currentLocalTasks = JSON.parse(savedTasks); } 
-        else { generateNewLocalTasks(5); } // Start cu 5
+        else { generateNewLocalTasks(5); } 
 
         let html = "";
         let completedCount = 0;
@@ -399,19 +497,11 @@
         });
         container.innerHTML = html;
 
-        // --- LOGICA BUTOANELOR ---
-        // Butoanele apar DOAR dacă toate cele 5 (sau mai multe) task-uri curente sunt Gata/Eșuate
-        if(completedCount === currentLocalTasks.length) {
+        if(completedCount >= 5) {
             document.getElementById('finish-btn').classList.remove('hidden');
-            
-            // Butonul Extra apare doar dacă avem sub 10 task-uri
-            if(currentLocalTasks.length < 10) {
-                document.getElementById('more-btn').classList.remove('hidden');
-            } else {
-                document.getElementById('more-btn').classList.add('hidden');
-            }
+            if(currentLocalTasks.length < 10) { document.getElementById('more-btn').classList.remove('hidden'); } 
+            else { document.getElementById('more-btn').classList.add('hidden'); }
         } else {
-            // Dacă mai ai de muncă, ascundem butoanele
             document.getElementById('finish-btn').classList.add('hidden');
             document.getElementById('more-btn').classList.add('hidden');
         }
@@ -424,21 +514,14 @@
         localStorage.setItem('travel_app_tasks', JSON.stringify(currentLocalTasks));
     }
 
-    // --- NEW: ADDS 1 TASK ---
     window.loadOneExtraTask = () => {
         if(currentLocalTasks.length >= 10) return; 
-
         const shuffled = [...allTasks].sort(() => 0.5 - Math.random());
         let newTask = null;
-        for(let t of shuffled) {
-            if(!currentLocalTasks.includes(t)) { newTask = t; break; }
-        }
-
+        for(let t of shuffled) { if(!currentLocalTasks.includes(t)) { newTask = t; break; } }
         if(newTask) {
             currentLocalTasks.push(newTask);
             localStorage.setItem('travel_app_tasks', JSON.stringify(currentLocalTasks));
-            
-            // Re-randăm imediat pentru a ascunde butoanele (trebuie să faci noul task)
             const ref = doc(db, "rooms", currentRoom);
             getDoc(ref).then(s => renderTasksAndSync(s.data().submissions || []));
         }
@@ -459,14 +542,11 @@
     }
 
     window.markAsFailed = async (domId, taskText) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 300; canvas.height = 150;
+        const canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = 150;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = "#f8d7da"; ctx.fillRect(0, 0, 300, 150);
-        ctx.font = "bold 40px Arial"; ctx.fillStyle = "#dc3545";
-        ctx.textAlign = "center"; ctx.fillText("TASK EȘUAT ❌", 150, 85);
+        ctx.font = "bold 40px Arial"; ctx.fillStyle = "#dc3545"; ctx.textAlign = "center"; ctx.fillText("TASK EȘUAT ❌", 150, 85);
         const failImage = canvas.toDataURL('image/png').replace("data:image/png", "data:image/png;base64,FAIL"); 
-
         try {
             await updateDoc(doc(db, "rooms", currentRoom), {
                 submissions: arrayUnion({ user: currentUser.name, photo: failImage, task: taskText, votes: -100 })
@@ -481,7 +561,6 @@
         } catch(e) { console.error(e); alert("Eroare la finalizare."); }
     }
 
-    // --- UPLOAD ---
     window.processAndUpload = (domId, taskText, input) => {
         if (input.files && input.files[0]) {
             const file = input.files[0];
@@ -518,7 +597,6 @@
 
     window.goToVoting = async () => { if(confirm("Toți trec la vot?")) await updateDoc(doc(db, "rooms", currentRoom), { status: "voting" }); }
 
-    // --- VOTING ---
     function setupVoting(subs) {
         const g = document.getElementById('gallery'); g.innerHTML = "";
         if(!subs || subs.length === 0) return;
