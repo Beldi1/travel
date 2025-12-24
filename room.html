@@ -144,13 +144,75 @@
     const storage = getStorage(app);
     const usersCollection = collection(db, "users");
 
+    // --- LISTA TASK-URI (50 ELEMENTE) ---
+    const allTasks = [
+        // Interacțiune Socială & Curaj
+        "Fă poză cu 2 oameni random.",
+        "Fă o poză unui autograf primit de la cineva.",
+        "Fă o poză unui obiect random pe care l-ai primit de la un străin.",
+        "Fă un selfie imediat după ce ai bătut palma cu un străin.",
+        "Fă o poză cu cineva care are aceeași culoare la haine ca tine.",
+        "Roagă un străin să îți facă o poză ție.",
+        "Fă o poză unui câine întâlnit pe stradă.",
+        "Fă o poză unui vânzător ținând în mână cel mai ciudat obiect din magazin.",
+        "Fă o poză unui desen făcut rapid de cineva pe un șervețel.",
+        "Fă un selfie cu un polițist, pompier sau paznic.",
+        "Fă o poză unui artist stradal în timp ce performează.",
+        "Fă o poză cuiva care poartă o pălărie interesantă.",
+
+        // Explorare Urbană & Arhitectură
+        "Fă poză în fața unei clădiri cu arhitectură interesantă.",
+        "Fă o poză cu anul construcției vizibil pe fațada unei clădiri.",
+        "Fă un selfie în fața celei mai colorate uși pe care o găsești.",
+        "Fă o poză în care imiți poziția unei statui.",
+        "Fă o poză de-a lungul celei mai înguste străduțe găsite.",
+        "Fă o poză cu un ceas public care arată ora exactă.",
+        "Fă o poză panoramică a orașului dintr-un punct înalt.",
+        "Fă un selfie cu un desen Street Art sau Graffiti în fundal.",
+        "Fă o poză reflexiei tale într-o vitrină sau o baltă.",
+        "Fă o poză unui balcon plin cu flori.",
+        "Fă o poză unei fântâni arteziene sau cișmele publice.",
+        "Fă o poză unui semn stradal cu un nume amuzant.",
+        "Fă o poză stând pe un pod.",
+
+        // Colecționarul
+        "Fă o poză cu 5 cărți de vizită diferite.",
+        "Fă o poză cu un suport de pahar dintr-un bar.",
+        "Fă o poză cu prima pagină a unui ziar local.",
+        "Fă o poză unui bon fiscal lângă obiectul cumpărat.",
+        "Fă o poză cu o monedă găsită pe jos.",
+        "Fă o poză cu un plic de zahăr cu logo-ul unei cafenele.",
+        "Fă o poză unui bilet de transport local.",
+        "Fă o poză cu cea mai kitsch vedere turistică găsită.",
+        "Fă o poză cu o piatră sau o frunză cu o formă unică.",
+
+        // Creativitate & Fun
+        "Fă o poză cu tine în săritură într-o piață centrală.",
+        "Fă o poză picioarelor tale pe un model de pavaj interesant.",
+        "Fă o poză cu un obiect de culoare galben aprins.",
+        "Fă o poză vitrinei unui magazin care vinde ceva foarte specific.",
+        "Fă o poză artistică în care un mijloc de transport apare mișcat.",
+        "Fă un selfie îmbrățișând cel mai bătrân copac dintr-un parc.",
+        "Fă o poză cu numărul de înmatriculare al unei mașini din altă țară.",
+        "Fă o poză cu un ceas stradal care arată ora greșită sau este oprit.",
+        "Fă un selfie cu ochelari de soare în care se vede reflexia unui obiectiv turistic.",
+        "Fă o poză cu propria ta umbră având o formă interesantă.",
+        "Fă o poză macro cu un sticker lipit pe un stâlp.",
+
+        // Food & Drink
+        "Fă un selfie în timp ce muști dintr-un preparat de patiserie local.",
+        "Fă o poză cu o băutură locală nouă pentru tine.",
+        "Fă o poză cu cel mai apetisant desert dintr-o vitrină.",
+        "Fă o poză unui stand de fructe dintr-o piață alimentară.",
+        "Fă o poză unui raion de supermarket cu produse necunoscute."
+    ];
+
     // --- LOGICA DE SECURITATE (CHECK DB) ---
     let currentUser = null;
 
     async function checkAuth() {
         const localData = localStorage.getItem('travel_app_user');
         
-        // 1. Dacă nu are nimic în browser -> PA!
         if (!localData) {
             window.location.href = "login.html";
             return;
@@ -159,46 +221,35 @@
         const parsedUser = JSON.parse(localData);
 
         try {
-            // 2. Verificăm în baza de date dacă userul există ȘI are parola hash corectă
-            // Asta previne intrarea cuiva care și-a modificat manual localStorage-ul
             const q = query(usersCollection, 
                 where("name", "==", parsedUser.name),
                 where("passwordHash", "==", parsedUser.passwordHash) 
             );
-            
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                // Dacă nu există în DB -> Ștergem datele locale false și redirectăm
                 localStorage.removeItem('travel_app_user');
                 alert("Sesiune invalidă! Te rog să te loghezi din nou.");
                 window.location.href = "login.html";
             } else {
-                // 3. Totul e OK -> Scoatem ecranul de securitate și populăm datele
                 currentUser = {
                     name: parsedUser.name,
                     photo: parsedUser.avatar
                 };
-                
-                // Actualizăm UI
                 document.getElementById('my-name').innerText = currentUser.name;
                 document.getElementById('my-avatar').src = currentUser.photo;
-                
-                // Ascundem loader-ul
                 document.getElementById('security-overlay').style.display = 'none';
             }
 
         } catch (error) {
             console.error("Eroare verificare:", error);
             alert("Eroare la conectare server.");
-            // În caz de eroare gravă de rețea, rămâne pe loading sau îl poți trimite la login
         }
     }
 
-    // Rulăm verificarea imediat ce se încarcă scriptul
     checkAuth();
 
-    // --- LOGICA JOCULUI (Standard) ---
+    // --- LOGICA JOCULUI ---
     
     window.logout = () => {
         localStorage.removeItem('travel_app_user');
@@ -210,14 +261,6 @@
     let tasksDone = 0;
     let myVotes = 5;
     let votedIdx = [];
-
-    const allTasks = [
-        "Fă poză cu 2 oameni random.", "Autograf primit.", "High-five cu un străin.",
-        "Clădire interesantă.", "Ușă colorată.", "Imită o statuie.",
-        "5 cărți de vizită.", "Bon fiscal.", "Săritură în aer.",
-        "Obiect galben.", "Patiserie locală.", "Un câine.",
-        "Reflexie în vitrină.", "Semn stradal amuzant.", "Copac bătrân."
-    ];
 
     window.createRoom = async () => {
         const rName = document.getElementById('room-input').value.trim();
@@ -269,8 +312,13 @@
 
     function genTasks(count) {
         const container = document.getElementById('tasks-container');
-        for(let i=0; i<count; i++) {
-            const t = allTasks[Math.floor(Math.random()*allTasks.length)];
+        // Amestecăm lista mare și luăm primele 'count' elemente pentru a fi RANDOM și UNICE
+        const shuffled = [...allTasks].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, count);
+
+        container.innerHTML = ""; // Curățăm containerul înainte
+
+        selected.forEach((t, i) => {
             const id = "task_" + Date.now() + i;
             container.innerHTML += `
                 <div id="${id}" class="task-card">
@@ -281,12 +329,26 @@
                         <button class="btn btn-skip" style="width:auto; padding:8px; margin:0; background:#ff3b3f" onclick="skipTask('${id}')">Skip (${skips})</button>
                     </div>
                 </div>`;
-        }
+        });
     }
 
     window.skipTask = (id) => {
         if(skips > 0) {
-            skips--; document.getElementById(id).remove(); genTasks(1);
+            skips--; 
+            document.getElementById(id).remove(); 
+            // Generăm 1 singur task nou din restul listei
+            const t = allTasks[Math.floor(Math.random()*allTasks.length)];
+            const newId = "task_skip_" + Date.now();
+            const container = document.getElementById('tasks-container');
+            container.innerHTML += `
+                <div id="${newId}" class="task-card">
+                    <b>${t}</b>
+                    <div style="margin-top:10px; display:flex; gap:10px;">
+                        <input type="file" id="f_${newId}" style="display:none" onchange="processAndUpload('${newId}', this)">
+                        <button class="btn" style="width:auto; padding:8px; margin:0; background:#2dc937" onclick="document.getElementById('f_${newId}').click()">📸 Upload</button>
+                        <button class="btn btn-skip" style="width:auto; padding:8px; margin:0; background:#ff3b3f" onclick="skipTask('${newId}')">Skip (${skips})</button>
+                    </div>
+                </div>`;
         } else {
             document.getElementById(id).innerHTML += "<br><b style='color:red'>EȘUAT</b>";
         }
