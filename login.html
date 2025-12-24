@@ -201,7 +201,7 @@
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
-            usersCollection = collection(db, "secret_santa_users");
+            usersCollection = collection(db, "users");
         } catch(e) { console.error(e); alert("Eroare Firebase!"); }
 
         // --- HELPERS ---
