@@ -224,19 +224,67 @@
     const db = getFirestore(app);
     const usersCollection = collection(db, "users");
 
-    // LISTA TASK-URI
+    // LISTA NOUA DE TASK-URI (50 BUCĂȚI)
     const allTasks = [
-        "Fă poză cu 2 oameni random.", "Fă o poză unui autograf primit.", "Fă o poză unui obiect primit de la un străin.", "Selfie bătând palma cu un străin.",
-        "Poză cu cineva cu haine la fel ca tine.", "Roagă un străin să îți facă o poză.", "Fă o poză unui câine.", "Poză cu cel mai ciudat obiect dintr-un magazin.",
-        "Poză cu un desen pe șervețel.", "Selfie cu un polițist/pompier.", "Poză unui artist stradal.", "Poză cu cineva cu pălărie.",
-        "Poză la o clădire interesantă.", "Poză cu anul construcției unei clădiri.", "Selfie la o ușă colorată.", "Imită o statuie.",
-        "Cea mai îngustă stradă.", "Ceas public cu ora exactă.", "Panoramă de sus.", "Selfie cu Graffiti.",
-        "Reflexie în vitrină.", "Balcon cu flori.", "Fântână arteziană.", "Semn stradal amuzant.", "Stând pe un pod.",
-        "5 cărți de vizită.", "Suport de pahar din bar.", "Prima pagină ziar local.", "Bon fiscal lângă produs.",
-        "Monedă de pe jos.", "Plic de zahăr cu logo.", "Bilet de transport.", "Vedere turistică kitsch.", "Piatră cu formă unică.",
-        "Săritură în aer.", "Picioarele pe pavaj interesant.", "Obiect galben aprins.", "Vitrină specifică.", "Transport în mișcare (blur).",
-        "Îmbrățișând un copac.", "Număr auto străin.", "Ceas stricat.", "Reflexie în ochelari.", "Umbră interesantă.", "Sticker pe stâlp.",
-        "Mușcând din patiserie.", "Băutură nouă.", "Desert în vitrină.", "Stand de fructe.", "Produs necunoscut în supermarket."
+        // 📸 Interacțiune Socială & Curaj
+        "📸 Fă poză cu 2 oameni random.",
+        "📸 Fă o poză unui autograf primit de la cineva.",
+        "📸 Fă o poză unui obiect random pe care l-ai primit de la un străin.",
+        "📸 Fă un selfie imediat după ce ai bătut palma cu un străin.",
+        "📸 Fă o poză cu cineva care are aceeași culoare la haine ca tine.",
+        "📸 Roagă un străin să îți facă o poză ție.",
+        "📸 Fă o poză unui câine întâlnit pe stradă.",
+        "📸 Fă o poză unui vânzător ținând în mână cel mai ciudat obiect din magazin.",
+        "📸 Fă o poză unui desen făcut rapid de cineva pe un șervețel.",
+        "📸 Fă un selfie cu un polițist, pompier sau paznic.",
+        "📸 Fă o poză unui artist stradal în timp ce performează.",
+        "📸 Fă o poză cuiva care poartă o pălărie interesantă.",
+
+        // 🏛️ Explorare Urbană & Arhitectură
+        "🏛️ Fă poză în fața unei clădiri cu arhitectură interesantă.",
+        "🏛️ Fă o poză cu anul construcției vizibil pe fațada unei clădiri.",
+        "🏛️ Fă un selfie în fața celei mai colorate uși pe care o găsești.",
+        "🏛️ Fă o poză în care imiți poziția unei statui.",
+        "🏛️ Fă o poză de-a lungul celei mai înguste străduțe găsite.",
+        "🏛️ Fă o poză cu un ceas public care arată ora exactă.",
+        "🏛️ Fă o poză panoramică a orașului dintr-un punct înalt.",
+        "🏛️ Fă un selfie cu un desen Street Art sau Graffiti în fundal.",
+        "🏛️ Fă o poză reflexiei tale într-o vitrină sau o baltă.",
+        "🏛️ Fă o poză unui balcon plin cu flori.",
+        "🏛️ Fă o poză unei fântâni arteziene sau cișmele publice.",
+        "🏛️ Fă o poză unui semn stradal cu un nume amuzant.",
+        "🏛️ Fă o poză stând pe un pod.",
+
+        // 🎒 Colecționarul
+        "🎒 Fă o poză cu 5 cărți de vizită diferite.",
+        "🎒 Fă o poză cu un suport de pahar dintr-un bar.",
+        "🎒 Fă o poză cu prima pagină a unui ziar local.",
+        "🎒 Fă o poză unui bon fiscal lângă obiectul cumpărat.",
+        "🎒 Fă o poză cu o monedă găsită pe jos.",
+        "🎒 Fă o poză cu un plic de zahăr cu logo-ul unei cafenele.",
+        "🎒 Fă o poză unui bilet de transport local.",
+        "🎒 Fă o poză cu cea mai kitsch vedere turistică găsită.",
+        "🎒 Fă o poză cu o piatră sau o frunză cu o formă unică.",
+
+        // 🎬 Creativitate & Fun
+        "🎬 Fă o poză cu tine în săritură într-o piață centrală.",
+        "🎬 Fă o poză picioarelor tale pe un model de pavaj interesant.",
+        "🎬 Fă o poză cu un obiect de culoare galben aprins.",
+        "🎬 Fă o poză vitrinei unui magazin care vinde ceva foarte specific.",
+        "🎬 Fă o poză artistică în care un mijloc de transport apare mișcat.",
+        "🎬 Fă un selfie îmbrățișând cel mai bătrân copac dintr-un parc.",
+        "🎬 Fă o poză cu numărul de înmatriculare al unei mașini din altă țară.",
+        "🎬 Fă o poză cu un ceas stradal care arată ora greșită sau este oprit.",
+        "🎬 Fă un selfie cu ochelari de soare în care se vede reflexia unui obiectiv turistic.",
+        "🎬 Fă o poză cu propria ta umbră având o formă interesantă.",
+        "🎬 Fă o poză macro cu un sticker lipit pe un stâlp.",
+
+        // 🍔 Food & Drink
+        "🍔 Fă un selfie în timp ce muști dintr-un preparat de patiserie local.",
+        "🍔 Fă o poză cu o băutură locală nouă pentru tine.",
+        "🍔 Fă o poză cu cel mai apetisant desert dintr-o vitrină.",
+        "🍔 Fă o poză unui stand de fructe dintr-o piață alimentară.",
+        "🍔 Fă o poză unui raion de supermarket cu produse necunoscute."
     ];
 
     let currentUser = null;
