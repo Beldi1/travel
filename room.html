@@ -25,7 +25,7 @@
         .loader {
             border: 4px solid #333; border-top: 4px solid #ff3b3f;
             border-radius: 50%; width: 40px; height: 40px;
-            animation: spin 1s linear infinite; mb-3;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -52,6 +52,11 @@
             border-radius: 50px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem;
         }
         .btn:disabled { background: #555; }
+        
+        .btn-exit {
+            background: transparent; border: 1px solid #ff3b3f; color: #ff3b3f;
+            padding: 8px; font-size: 0.9rem; margin-top: 20px;
+        }
 
         /* Task-uri */
         .task-card {
@@ -76,14 +81,14 @@
 
 <div id="security-overlay">
     <div class="loader"></div>
-    <p style="margin-top:20px; color:#fff;">Verificăm accesul...</p>
+    <p style="color:#fff;">Se încarcă...</p>
 </div>
 
 <div class="container">
     <div class="profile-header">
         <img id="my-avatar" src="">
         <div>
-            <h3 style="margin:0; font-size:1rem; color:#ccc;">Salut,</h3>
+            <h3 style="margin:0; font-size:1rem; color:#ccc;">Jucător:</h3>
             <h2 id="my-name" style="margin:0; color:#ffcc00;">...</h2>
         </div>
     </div>
@@ -92,44 +97,46 @@
 
     <div id="lobby-screen" class="screen active">
         <div class="glass-card">
-            <p>Introdu numele camerei pentru a juca cu prietenii:</p>
+            <p>Introdu numele camerei:</p>
             <input type="text" id="room-input" placeholder="Nume Cameră (ex: Iasi)">
             
             <div style="display:flex; gap:10px;">
                 <button class="btn" onclick="createRoom()" style="background:#6c5ce7">Creează</button>
                 <button class="btn" onclick="joinRoom()" style="background:#2dc937">Intră</button>
             </div>
-            <button class="btn" onclick="logout()" style="background:transparent; border:1px solid #555; margin-top:20px; font-size:0.9rem;">Ieși din cont</button>
+            <button class="btn" onclick="logout()" style="background:transparent; border:1px solid #555; margin-top:20px; font-size:0.9rem;">Delogare Cont</button>
         </div>
     </div>
 
     <div id="game-screen" class="screen">
         <h3 id="room-display" style="color:#ffcc00;"></h3>
         <div id="tasks-container"></div>
-        <button id="start-btn" class="btn" onclick="startGame()">START JOC</button>
-        <button id="more-btn" class="btn hidden" onclick="loadMoreTasks()" style="background:#6c5ce7">Încă 5</button>
-        <button id="finish-btn" class="btn hidden" onclick="goToVoting()" style="background:orange">Gata!</button>
+        
+        <button id="more-btn" class="btn hidden" onclick="loadMoreTasks()" style="background:#6c5ce7">Încă 5 Task-uri</button>
+        <button id="finish-btn" class="btn hidden" onclick="goToVoting()" style="background:orange">Termină Jocul</button>
+        
+        <button class="btn btn-exit" onclick="exitRoom()">🚪 Ieși din această cameră</button>
     </div>
 
     <div id="voting-screen" class="screen glass-card">
         <h2>Votare</h2>
         <p>Voturi rămase: <b id="votes-left" style="color:#ffcc00; font-size:1.5rem">5</b></p>
         <div id="gallery" class="gallery"></div>
-        <button id="vote-btn" class="btn" onclick="finalizeVoting()" disabled>Trimite</button>
+        <button id="vote-btn" class="btn" onclick="finalizeVoting()" disabled>Trimite Voturile</button>
     </div>
 
     <div id="results-screen" class="screen glass-card">
         <h1>🏆 Clasament</h1>
         <div id="leaderboard"></div>
-        <button class="btn" onclick="location.reload()">Reset</button>
+        <button class="btn" onclick="exitRoom()">Joacă din nou</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-    import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
+    // NU mai folosim Storage, doar Firestore
     const firebaseConfig = {
         apiKey: "AIzaSyAkMDbDQVyWqeOKlyB9n7_93q7f6RuHiX0",
         authDomain: "secret-santa-ce9e0.firebaseapp.com",
@@ -141,76 +148,32 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const storage = getStorage(app);
     const usersCollection = collection(db, "users");
 
     // --- LISTA TASK-URI (50 ELEMENTE) ---
     const allTasks = [
-        // Interacțiune Socială & Curaj
-        "Fă poză cu 2 oameni random.",
-        "Fă o poză unui autograf primit de la cineva.",
-        "Fă o poză unui obiect random pe care l-ai primit de la un străin.",
-        "Fă un selfie imediat după ce ai bătut palma cu un străin.",
-        "Fă o poză cu cineva care are aceeași culoare la haine ca tine.",
-        "Roagă un străin să îți facă o poză ție.",
-        "Fă o poză unui câine întâlnit pe stradă.",
-        "Fă o poză unui vânzător ținând în mână cel mai ciudat obiect din magazin.",
-        "Fă o poză unui desen făcut rapid de cineva pe un șervețel.",
-        "Fă un selfie cu un polițist, pompier sau paznic.",
-        "Fă o poză unui artist stradal în timp ce performează.",
-        "Fă o poză cuiva care poartă o pălărie interesantă.",
-
-        // Explorare Urbană & Arhitectură
-        "Fă poză în fața unei clădiri cu arhitectură interesantă.",
-        "Fă o poză cu anul construcției vizibil pe fațada unei clădiri.",
-        "Fă un selfie în fața celei mai colorate uși pe care o găsești.",
-        "Fă o poză în care imiți poziția unei statui.",
-        "Fă o poză de-a lungul celei mai înguste străduțe găsite.",
-        "Fă o poză cu un ceas public care arată ora exactă.",
-        "Fă o poză panoramică a orașului dintr-un punct înalt.",
-        "Fă un selfie cu un desen Street Art sau Graffiti în fundal.",
-        "Fă o poză reflexiei tale într-o vitrină sau o baltă.",
-        "Fă o poză unui balcon plin cu flori.",
-        "Fă o poză unei fântâni arteziene sau cișmele publice.",
-        "Fă o poză unui semn stradal cu un nume amuzant.",
-        "Fă o poză stând pe un pod.",
-
-        // Colecționarul
-        "Fă o poză cu 5 cărți de vizită diferite.",
-        "Fă o poză cu un suport de pahar dintr-un bar.",
-        "Fă o poză cu prima pagină a unui ziar local.",
-        "Fă o poză unui bon fiscal lângă obiectul cumpărat.",
-        "Fă o poză cu o monedă găsită pe jos.",
-        "Fă o poză cu un plic de zahăr cu logo-ul unei cafenele.",
-        "Fă o poză unui bilet de transport local.",
-        "Fă o poză cu cea mai kitsch vedere turistică găsită.",
-        "Fă o poză cu o piatră sau o frunză cu o formă unică.",
-
-        // Creativitate & Fun
-        "Fă o poză cu tine în săritură într-o piață centrală.",
-        "Fă o poză picioarelor tale pe un model de pavaj interesant.",
-        "Fă o poză cu un obiect de culoare galben aprins.",
-        "Fă o poză vitrinei unui magazin care vinde ceva foarte specific.",
-        "Fă o poză artistică în care un mijloc de transport apare mișcat.",
-        "Fă un selfie îmbrățișând cel mai bătrân copac dintr-un parc.",
-        "Fă o poză cu numărul de înmatriculare al unei mașini din altă țară.",
-        "Fă o poză cu un ceas stradal care arată ora greșită sau este oprit.",
-        "Fă un selfie cu ochelari de soare în care se vede reflexia unui obiectiv turistic.",
-        "Fă o poză cu propria ta umbră având o formă interesantă.",
-        "Fă o poză macro cu un sticker lipit pe un stâlp.",
-
-        // Food & Drink
-        "Fă un selfie în timp ce muști dintr-un preparat de patiserie local.",
-        "Fă o poză cu o băutură locală nouă pentru tine.",
-        "Fă o poză cu cel mai apetisant desert dintr-o vitrină.",
-        "Fă o poză unui stand de fructe dintr-o piață alimentară.",
-        "Fă o poză unui raion de supermarket cu produse necunoscute."
+        "Fă poză cu 2 oameni random.", "Fă o poză unui autograf primit.", "Fă o poză unui obiect primit de la un străin.", "Selfie bătând palma cu un străin.",
+        "Poză cu cineva cu haine la fel ca tine.", "Roagă un străin să îți facă o poză.", "Fă o poză unui câine.", "Poză cu cel mai ciudat obiect dintr-un magazin.",
+        "Poză cu un desen pe șervețel.", "Selfie cu un polițist/pompier.", "Poză unui artist stradal.", "Poză cu cineva cu pălărie.",
+        "Poză la o clădire interesantă.", "Poză cu anul construcției unei clădiri.", "Selfie la o ușă colorată.", "Imită o statuie.",
+        "Cea mai îngustă stradă.", "Ceas public cu ora exactă.", "Panoramă de sus.", "Selfie cu Graffiti.",
+        "Reflexie în vitrină.", "Balcon cu flori.", "Fântână arteziană.", "Semn stradal amuzant.", "Stând pe un pod.",
+        "5 cărți de vizită.", "Suport de pahar din bar.", "Prima pagină ziar local.", "Bon fiscal lângă produs.",
+        "Monedă de pe jos.", "Plic de zahăr cu logo.", "Bilet de transport.", "Vedere turistică kitsch.", "Piatră cu formă unică.",
+        "Săritură în aer.", "Picioarele pe pavaj interesant.", "Obiect galben aprins.", "Vitrină specifică.", "Transport în mișcare (blur).",
+        "Îmbrățișând un copac.", "Număr auto străin.", "Ceas stricat.", "Reflexie în ochelari.", "Umbră interesantă.", "Sticker pe stâlp.",
+        "Mușcând din patiserie.", "Băutură nouă.", "Desert în vitrină.", "Stand de fructe.", "Produs necunoscut în supermarket."
     ];
 
-    // --- LOGICA DE SECURITATE (CHECK DB) ---
     let currentUser = null;
+    let currentRoom = null;
+    let currentLocalTasks = []; // Taskurile active ale userului
+    let skips = 2;
+    let myVotes = 5;
+    let votedIdx = [];
 
-    async function checkAuth() {
+    // --- 1. VERIFICARE LOGIN & CAMERĂ SALVATĂ ---
+    async function initApp() {
         const localData = localStorage.getItem('travel_app_user');
         
         if (!localData) {
@@ -221,6 +184,7 @@
         const parsedUser = JSON.parse(localData);
 
         try {
+            // Verificare sumară DB (Securitate)
             const q = query(usersCollection, 
                 where("name", "==", parsedUser.name),
                 where("passwordHash", "==", parsedUser.passwordHash) 
@@ -229,39 +193,45 @@
 
             if (querySnapshot.empty) {
                 localStorage.removeItem('travel_app_user');
-                alert("Sesiune invalidă! Te rog să te loghezi din nou.");
                 window.location.href = "login.html";
             } else {
-                currentUser = {
-                    name: parsedUser.name,
-                    photo: parsedUser.avatar
-                };
+                currentUser = { name: parsedUser.name, photo: parsedUser.avatar };
                 document.getElementById('my-name').innerText = currentUser.name;
                 document.getElementById('my-avatar').src = currentUser.photo;
-                document.getElementById('security-overlay').style.display = 'none';
+                
+                // --- VERIFICARE CAMERĂ SALVATĂ ---
+                const savedRoom = localStorage.getItem('travel_app_room');
+                if(savedRoom) {
+                    console.log("Cameră găsită, reintrare automată:", savedRoom);
+                    joinRoomLogic(savedRoom);
+                } else {
+                    document.getElementById('security-overlay').style.display = 'none';
+                }
             }
-
         } catch (error) {
-            console.error("Eroare verificare:", error);
-            alert("Eroare la conectare server.");
+            console.error(error);
+            alert("Eroare conexiune.");
         }
     }
 
-    checkAuth();
+    initApp();
 
-    // --- LOGICA JOCULUI ---
-    
     window.logout = () => {
-        localStorage.removeItem('travel_app_user');
-        window.location.href = "login.html";
+        if(confirm("Te deloghezi?")) {
+            localStorage.clear(); // Șterge tot (user, cameră, taskuri)
+            window.location.href = "login.html";
+        }
     }
 
-    let currentRoom = null;
-    let skips = 2;
-    let tasksDone = 0;
-    let myVotes = 5;
-    let votedIdx = [];
+    window.exitRoom = () => {
+        if(confirm("Ieși din cameră? Progresul local se poate reseta.")) {
+            localStorage.removeItem('travel_app_room');
+            localStorage.removeItem('travel_app_tasks'); // Opțional: resetăm și taskurile dacă iese
+            location.reload();
+        }
+    }
 
+    // --- 2. LOGICA CAMERĂ ---
     window.createRoom = async () => {
         const rName = document.getElementById('room-input').value.trim();
         if(!rName) return alert("Scrie numele camerei!");
@@ -269,7 +239,7 @@
             await setDoc(doc(db, "rooms", rName), {
                 status: "lobby", players: [currentUser.name], submissions: []
             });
-            joinRoomLogic(rName);
+            saveRoomAndJoin(rName);
         } catch(e) { alert("Eroare: " + e.message); }
     };
 
@@ -280,19 +250,35 @@
         const snap = await getDoc(ref);
         if(snap.exists()) {
             await updateDoc(ref, { players: arrayUnion(currentUser.name) });
-            joinRoomLogic(rName);
+            saveRoomAndJoin(rName);
         } else { alert("Nu există camera!"); }
     };
+
+    function saveRoomAndJoin(rName) {
+        // Salvăm camera persistent
+        localStorage.setItem('travel_app_room', rName);
+        joinRoomLogic(rName);
+    }
 
     function joinRoomLogic(rName) {
         currentRoom = rName;
         document.getElementById('room-display').innerText = "Camera: " + rName;
+        
+        // UI Switch
+        document.getElementById('security-overlay').style.display = 'none';
         document.getElementById('lobby-screen').classList.remove('active');
         document.getElementById('game-screen').classList.add('active');
         
+        // Listen to DB
         onSnapshot(doc(db, "rooms", currentRoom), (s) => {
             const d = s.data();
             if(!d) return;
+
+            // Dacă jocul e activ, randăm taskurile (și verificăm ce e gata din DB)
+            if(d.status === 'lobby' || d.status === 'playing') {
+                renderTasksAndSync(d.submissions || []);
+            }
+            
             if(d.status === 'voting') {
                 setupVoting(d.submissions);
                 document.getElementById('game-screen').classList.remove('active');
@@ -305,61 +291,119 @@
         });
     }
 
-    window.startGame = () => {
-        document.getElementById('start-btn').classList.add('hidden');
-        genTasks(5);
-    };
-
-    function genTasks(count) {
+    // --- 3. LOGICA TASKURI (PERSISTENTE) ---
+    function renderTasksAndSync(dbSubmissions) {
         const container = document.getElementById('tasks-container');
-        // Amestecăm lista mare și luăm primele 'count' elemente pentru a fi RANDOM și UNICE
-        const shuffled = [...allTasks].sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, count);
+        
+        // 1. Încercăm să încărcăm taskurile din localStorage
+        const savedTasks = localStorage.getItem('travel_app_tasks');
+        
+        if (savedTasks) {
+            currentLocalTasks = JSON.parse(savedTasks);
+        } else {
+            // Dacă nu avem taskuri, generăm 5 noi și le salvăm
+            generateNewLocalTasks(5);
+        }
 
-        container.innerHTML = ""; // Curățăm containerul înainte
+        // 2. Randăm taskurile
+        // Nu vrem să re-generăm HTML-ul dacă nu s-a schimbat numărul de taskuri, 
+        // dar pentru simplitate o facem, și verificăm statusul
+        
+        let html = "";
+        let completedCount = 0;
 
-        selected.forEach((t, i) => {
-            const id = "task_" + Date.now() + i;
-            container.innerHTML += `
+        currentLocalTasks.forEach((t, i) => {
+            // Căutăm dacă acest task a fost deja făcut de user în DB
+            // Matching după TEXTUL taskului și NUMELE userului
+            const sub = dbSubmissions.find(s => s.user === currentUser.name && s.task === t);
+            
+            const id = "task_local_" + i; 
+
+            if (sub) {
+                // E gata! Arătăm poza din DB
+                completedCount++;
+                html += `
+                <div class="task-card completed">
+                    <b>✅ ${t}</b>
+                    <img src="${sub.photo}" width="100%" style="border-radius:10px; margin-top:5px;">
+                </div>`;
+            } else {
+                // Nu e gata, arătăm buton de upload
+                html += `
                 <div id="${id}" class="task-card">
                     <b>${t}</b>
                     <div style="margin-top:10px; display:flex; gap:10px;">
-                        <input type="file" id="f_${id}" style="display:none" onchange="processAndUpload('${id}', this)">
-                        <button class="btn" style="width:auto; padding:8px; margin:0; background:#2dc937" onclick="document.getElementById('f_${id}').click()">📸 Upload</button>
-                        <button class="btn btn-skip" style="width:auto; padding:8px; margin:0; background:#ff3b3f" onclick="skipTask('${id}')">Skip (${skips})</button>
+                        <input type="file" id="f_${id}" style="display:none" onchange="processAndUpload('${id}', '${t}', this)">
+                        <button class="btn" style="width:auto; padding:8px; margin:0; background:#2dc937" onclick="document.getElementById('f_${id}').click()">📸 Fă Poză</button>
+                        <button class="btn btn-skip" style="width:auto; padding:8px; margin:0; background:#ff3b3f" onclick="skipTaskLocal(${i})">Skip (${skips})</button>
                     </div>
                 </div>`;
+            }
         });
+
+        container.innerHTML = html;
+
+        // Arătăm butoane extra dacă s-au făcut 5
+        if(completedCount >= 5) {
+            document.getElementById('more-btn').classList.remove('hidden');
+            document.getElementById('finish-btn').classList.remove('hidden');
+        }
     }
 
-    window.skipTask = (id) => {
-        if(skips > 0) {
-            skips--; 
-            document.getElementById(id).remove(); 
-            // Generăm 1 singur task nou din restul listei
-            const t = allTasks[Math.floor(Math.random()*allTasks.length)];
-            const newId = "task_skip_" + Date.now();
-            const container = document.getElementById('tasks-container');
-            container.innerHTML += `
-                <div id="${newId}" class="task-card">
-                    <b>${t}</b>
-                    <div style="margin-top:10px; display:flex; gap:10px;">
-                        <input type="file" id="f_${newId}" style="display:none" onchange="processAndUpload('${newId}', this)">
-                        <button class="btn" style="width:auto; padding:8px; margin:0; background:#2dc937" onclick="document.getElementById('f_${newId}').click()">📸 Upload</button>
-                        <button class="btn btn-skip" style="width:auto; padding:8px; margin:0; background:#ff3b3f" onclick="skipTask('${newId}')">Skip (${skips})</button>
-                    </div>
-                </div>`;
-        } else {
-            document.getElementById(id).innerHTML += "<br><b style='color:red'>EȘUAT</b>";
+    function generateNewLocalTasks(count) {
+        const shuffled = [...allTasks].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, count);
+        currentLocalTasks = currentLocalTasks.concat(selected);
+        localStorage.setItem('travel_app_tasks', JSON.stringify(currentLocalTasks));
+    }
+
+    window.loadMoreTasks = () => {
+        const shuffled = [...allTasks].sort(() => 0.5 - Math.random());
+        // Adăugăm încă 5 care nu sunt deja în listă
+        const newOnes = [];
+        for(let t of shuffled) {
+            if(!currentLocalTasks.includes(t)) newOnes.push(t);
+            if(newOnes.length === 5) break;
         }
-        document.querySelectorAll('.btn-skip').forEach(b => b.innerText = `Skip (${skips})`);
+        currentLocalTasks = currentLocalTasks.concat(newOnes);
+        localStorage.setItem('travel_app_tasks', JSON.stringify(currentLocalTasks));
+        
+        // Trigger manual de refresh (logic se va face prin snapshot oricum, dar forțăm UI update)
+        const ref = doc(db, "rooms", currentRoom);
+        getDoc(ref).then(s => renderTasksAndSync(s.data().submissions || []));
+        
+        document.getElementById('more-btn').classList.add('hidden');
+    }
+
+    window.skipTaskLocal = (index) => {
+        if(skips > 0) {
+            skips--;
+            // Înlocuim taskul de la indexul respectiv cu unul nou random
+            let available = allTasks.filter(x => !currentLocalTasks.includes(x));
+            if(available.length > 0) {
+                const randomNew = available[Math.floor(Math.random() * available.length)];
+                currentLocalTasks[index] = randomNew;
+                localStorage.setItem('travel_app_tasks', JSON.stringify(currentLocalTasks));
+                // Reload UI
+                const ref = doc(db, "rooms", currentRoom);
+                getDoc(ref).then(s => renderTasksAndSync(s.data().submissions || []));
+            }
+        } else {
+            alert("Nu mai ai Skip-uri!");
+        }
+    }
+
+    window.startGame = () => {
+        // Nu mai e nevoie de buton explicit start, jocul începe la intrarea în cameră
+        // Dar îl păstrăm pentru compatibilitate vizuală dacă vrei
     };
 
-    window.processAndUpload = (id, input) => {
+    // --- 4. UPLOAD DIRECT ÎN FIRESTORE (Base64) ---
+    window.processAndUpload = (domId, taskText, input) => {
         if (input.files && input.files[0]) {
             const file = input.files[0];
             const reader = new FileReader();
-            const card = document.getElementById(id);
+            const card = document.getElementById(domId);
             card.style.opacity = "0.5"; 
 
             reader.onload = function(e) {
@@ -368,38 +412,32 @@
                 img.onload = async function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    const MAX_WIDTH = 500; 
+                    
+                    // COMPRESIE PUTERNICĂ PENTRU DB (Max 350px)
+                    const MAX_WIDTH = 350; 
                     const scaleSize = MAX_WIDTH / img.width;
                     canvas.width = MAX_WIDTH;
                     canvas.height = img.height * scaleSize;
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Calitate JPEG 0.6
+                    const base64 = canvas.toDataURL('image/jpeg', 0.6);
 
                     try {
-                        const fileName = `proofs/${currentRoom}/${currentUser.name}_${Date.now()}.jpg`;
-                        const storageRef = ref(storage, fileName);
-                        await uploadString(storageRef, dataURL, 'data_url');
-                        const url = await getDownloadURL(storageRef);
-
-                        const taskTxt = card.querySelector('b').innerText;
+                        // Salvăm direct Base64 în arrayUnion
                         await updateDoc(doc(db, "rooms", currentRoom), {
                             submissions: arrayUnion({
-                                user: currentUser.name, photo: url, task: taskTxt, votes: 0
+                                user: currentUser.name, 
+                                photo: base64, // Poza e string acum
+                                task: taskText, 
+                                votes: 0
                             })
                         });
-
-                        card.style.opacity = "1";
-                        card.classList.add('completed');
-                        card.innerHTML = `✅ ${taskTxt}<br><img src="${url}" width="100%" style="border-radius:10px; margin-top:5px;">`;
-                        
-                        tasksDone++;
-                        if(tasksDone === 5) {
-                            document.getElementById('more-btn').classList.remove('hidden');
-                            document.getElementById('finish-btn').classList.remove('hidden');
-                        }
+                        // UI-ul se va updata automat via onSnapshot -> renderTasksAndSync
 
                     } catch(err) {
-                        alert("Eroare upload: " + err.message);
+                        console.error(err);
+                        alert("Eroare upload (posibil poza prea mare, mai încearcă): " + err.message);
                         card.style.opacity = "1";
                     }
                 }
@@ -408,15 +446,16 @@
         }
     };
 
-    window.loadMoreTasks = () => { genTasks(5); document.getElementById('more-btn').classList.add('hidden'); }
     window.goToVoting = async () => {
         if(confirm("Toți trec la vot?")) await updateDoc(doc(db, "rooms", currentRoom), { status: "voting" });
     }
 
+    // --- VOTARE ---
     function setupVoting(subs) {
         const g = document.getElementById('gallery'); g.innerHTML = "";
         if(!subs || subs.length === 0) return;
         subs.forEach((s, i) => {
+            // Nu votăm pozele noastre
             if(s.user !== currentUser.name) {
                 g.innerHTML += `<div class="glass-card" style="padding:10px">
                     <img src="${s.photo}" onclick="toggleVote(${i}, this)">
@@ -449,7 +488,7 @@
         const l = document.getElementById('leaderboard'); l.innerHTML = "";
         subs.forEach((s, i) => {
             l.innerHTML += `<div class="glass-card">
-                <h3>#${i+1} ${s.user} (${s.votes})</h3>
+                <h3>#${i+1} ${s.user} (${s.votes} voturi)</h3>
                 <img src="${s.photo}" width="100%" style="border-radius:10px;">
                 <p>${s.task}</p>
             </div>`;
