@@ -31,7 +31,7 @@
         .bg-image {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32147?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
-            z-index: -2;
+            z-index: -3; /* Mutat mai în spate */
             animation: kenburns 60s linear infinite alternate;
         }
         @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.2); } }
@@ -40,9 +40,51 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--dark-overlay);
             backdrop-filter: blur(8px);
-            z-index: -1;
+            z-index: -2; /* Mutat mai în spate */
         }
 
+        /* --- NOU: Container pentru a poziționa personajul relativ la card --- */
+        .card-container {
+            position: relative;
+            width: 92%;
+            max-width: 420px;
+            /* Asigură că elementele care ies din container sunt vizibile */
+            overflow: visible; 
+        }
+
+        /* --- NOU: Personajul Animat Drăguț --- */
+        .cute-traveler {
+            position: absolute;
+            top: -140px; /* Poziționat deasupra cardului */
+            left: -50px; /* Ușor în stânga */
+            width: 180px; /* Dimensiunea personajului */
+            height: auto;
+            z-index: -1; /* Esențial: stă ÎN SPATELE sticlei */
+            
+            /* Starea inițială înainte de animație: ascuns jos și rotit */
+            opacity: 0;
+            transform: translateY(100px) rotate(-15deg);
+            
+            /* Două animații: una de intrare (pop) și una continuă (float) */
+            /* cubic-bezier oferă efectul elastic de "bounce" la intrare */
+            animation: popUpCharacter 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards 0.3s,
+                       gentleFloat 3s ease-in-out infinite alternate 1.5s;
+        }
+
+        @keyframes popUpCharacter {
+            to {
+                opacity: 1;
+                transform: translateY(0) rotate(0deg); /* Ajunge la poziția normală */
+            }
+        }
+
+        @keyframes gentleFloat {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-15px); } /* Plutește ușor în sus */
+        }
+
+
+        /* --- Cardul existent --- */
         .login-card {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -50,13 +92,14 @@
             border: 1px solid var(--glass-border);
             border-radius: 24px;
             padding: 40px 35px;
-            width: 92%;
-            max-width: 420px;
+            /* Scoatem width si max-width de aici pentru ca le are containerul părinte */
+            width: 100%; 
             text-align: center;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             overflow: hidden;
+            z-index: 1; /* Cardul este în fața personajului */
         }
         .login-card:hover { transform: translateY(-5px); border-color: rgba(255, 255, 255, 0.4); }
 
@@ -137,34 +180,38 @@
     <div class="bg-image"></div>
     <div class="bg-overlay"></div>
 
-    <div class="login-card">
-        <h1>Travel</h1>
-        <p class="subtitle">Începe aventura ta.</p>
-        
-        <div class="input-group">
-            <input type="text" id="username" class="input-field" placeholder=" " required autocomplete="off">
-            <label for="username" class="input-label">Nume utilizator</label>
-        </div>
-        
-        <div class="input-group">
-            <input type="password" id="userpass" class="input-field" placeholder=" " required>
-            <label for="userpass" class="input-label">Parola</label>
-        </div>
+    <div class="card-container">
+        <img src="https://cdni.iconscout.com/illustration/premium/thumb/traveler-holding-camera-and-map-4345529-3605197.png" class="cute-traveler" alt="Cute Traveler">
 
-        <div class="upload-container">
-            <label for="file-upload" class="upload-label" id="upload-btn-text">
-                <span style="font-size: 1.2rem;">📷</span> Adaugă o poză de profil (Opțional)
-            </label>
-            <input id="file-upload" type="file" accept="image/*" onchange="processImage(this)"/>
+        <div class="login-card">
+            <h1>Travel</h1>
+            <p class="subtitle">Începe aventura ta.</p>
             
-            <div id="preview-box" class="preview-container">
-                <canvas id="img-canvas"></canvas>
+            <div class="input-group">
+                <input type="text" id="username" class="input-field" placeholder=" " required autocomplete="off">
+                <label for="username" class="input-label">Nume utilizator</label>
             </div>
-            <input type="hidden" id="final-image-base64">
-        </div>
+            
+            <div class="input-group">
+                <input type="password" id="userpass" class="input-field" placeholder=" " required>
+                <label for="userpass" class="input-label">Parola</label>
+            </div>
 
-        <button class="btn" onclick="handleLogin()">Explorează</button>
-        <div id="login-msg"></div>
+            <div class="upload-container">
+                <label for="file-upload" class="upload-label" id="upload-btn-text">
+                    <span style="font-size: 1.2rem;">📷</span> Adaugă o poză de profil (Opțional)
+                </label>
+                <input id="file-upload" type="file" accept="image/*" onchange="processImage(this)"/>
+                
+                <div id="preview-box" class="preview-container">
+                    <canvas id="img-canvas"></canvas>
+                </div>
+                <input type="hidden" id="final-image-base64">
+            </div>
+
+            <button class="btn" onclick="handleLogin()">Explorează</button>
+            <div id="login-msg"></div>
+        </div>
     </div>
 
     <script type="module">
@@ -274,12 +321,10 @@
         function loginSuccess(user) {
             showMessage(`Perfect! Bun venit, ${user.name}!`, "success");
             localStorage.setItem('travel_app_user', JSON.stringify(user));
-            setTimeout(() => { window.location.href = "room.html"; }, 1500);
+            setTimeout(() => { window.location.href = "index.html"; }, 1500);
         }
 
-        // --- AICI ESTE MODIFICAREA PENTRU TINE ---
         window.onload = () => {
-            // Ștergem sesiunea veche ca să te lase să vezi formularul de login
             localStorage.removeItem('travel_app_user');
             console.log("Sesiune curățată.");
         };
