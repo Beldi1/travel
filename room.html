@@ -150,7 +150,7 @@
     <div id="waiting-screen" class="screen glass-card">
         <button class="back-btn" onclick="exitRoom()">⬅ Ieși</button>
         <h2 style="margin-top:30px;">⏳ Așteptăm...</h2>
-        <p style="font-size:0.9rem; opacity:0.8; margin-bottom:20px;">Jocul continuă până când toată lumea termină.</p>
+        <p style="font-size:0.9rem; opacity:0.8; margin-bottom:20px;">Tu ai terminat! Așteptăm să termine și restul prietenilor.</p>
         <div id="waiting-list" style="text-align:left;"></div>
     </div>
 
@@ -300,24 +300,34 @@
             const d = s.data();
             if(!d) return;
 
+            // 1. FAZA DE JOC
             if(d.status === 'lobby' || d.status === 'playing') { 
-                if(d.finishedPlayers && d.finishedPlayers.includes(currentUser.name)) {
+                // Verificăm dacă EU am terminat
+                const iHaveFinished = d.finishedPlayers && d.finishedPlayers.includes(currentUser.name);
+
+                if(iHaveFinished) {
+                    // Eu aștept
                     renderWaitingScreen(d.players, d.finishedPlayers);
                     document.getElementById('game-screen').classList.remove('active');
                     document.getElementById('waiting-screen').classList.add('active');
                     document.getElementById('lobby-screen').classList.remove('active');
                 } else {
+                    // Eu joc
                     renderTasksAndSync(d.submissions || []);
                     document.getElementById('lobby-screen').classList.remove('active');
                     document.getElementById('waiting-screen').classList.remove('active');
                     document.getElementById('game-screen').classList.add('active');
                 }
 
-                // Check daca toti au terminat
-                if(d.finishedPlayers && d.players && d.finishedPlayers.length === d.players.length && d.players.length > 0) {
-                     if(d.status !== 'voting') { updateDoc(doc(db, "rooms", currentRoom), { status: 'voting' }); }
+                // Verificăm dacă TOȚI au terminat
+                if(d.finishedPlayers && d.players && d.finishedPlayers.length >= d.players.length && d.players.length > 0) {
+                     // Dacă eu sunt ultimul care a dat finish, eu triggeruiesc schimbarea
+                     if(d.status !== 'voting') { 
+                        updateDoc(doc(db, "rooms", currentRoom), { status: 'voting' }); 
+                     }
                 }
             }
+            // 2. FAZA DE VOTARE
             else if(d.status === 'voting') {
                 setupVoting(d.submissions);
                 document.getElementById('lobby-screen').classList.remove('active');
@@ -325,6 +335,7 @@
                 document.getElementById('waiting-screen').classList.remove('active');
                 document.getElementById('voting-screen').classList.add('active');
             } 
+            // 3. FAZA DE REZULTATE
             else if(d.status === 'finished') {
                 setupResults(d.submissions);
                 document.getElementById('voting-screen').classList.remove('active');
@@ -337,7 +348,7 @@
         const list = document.getElementById('waiting-list');
         list.innerHTML = '';
         allPlayers.forEach(p => {
-            const isDone = finishedPlayers.includes(p);
+            const isDone = (finishedPlayers || []).includes(p);
             const div = document.createElement('div');
             div.className = 'player-status';
             div.innerHTML = `<span>${p}</span><span class="status-badge ${isDone ? 'status-ready' : 'status-playing'}">${isDone ? '✅ Gata' : '🎮 Joacă'}</span>`;
@@ -349,8 +360,9 @@
     function renderTasksAndSync(dbSubmissions) {
         const container = document.getElementById('tasks-container');
         const savedTasks = localStorage.getItem('travel_app_tasks');
+        
         if (savedTasks) { currentLocalTasks = JSON.parse(savedTasks); } 
-        else { generateNewLocalTasks(5); } // Start doar cu 5
+        else { generateNewLocalTasks(5); } // Start cu 5
 
         let html = "";
         let completedCount = 0;
@@ -387,19 +399,19 @@
         });
         container.innerHTML = html;
 
-        // LOGICA DE AFISARE BUTOANE:
-        // Doar daca ai terminat (sau esuat) primele 5 task-uri
-        if(completedCount >= 5) {
+        // --- LOGICA BUTOANELOR ---
+        // Butoanele apar DOAR dacă toate cele 5 (sau mai multe) task-uri curente sunt Gata/Eșuate
+        if(completedCount === currentLocalTasks.length) {
             document.getElementById('finish-btn').classList.remove('hidden');
             
-            // Butonul de adaugare task apare DOAR DACA nu ai depasit limita de 10
+            // Butonul Extra apare doar dacă avem sub 10 task-uri
             if(currentLocalTasks.length < 10) {
                 document.getElementById('more-btn').classList.remove('hidden');
             } else {
                 document.getElementById('more-btn').classList.add('hidden');
             }
         } else {
-            // Ascundem butoanele daca userul nu a terminat minimul de 5
+            // Dacă mai ai de muncă, ascundem butoanele
             document.getElementById('finish-btn').classList.add('hidden');
             document.getElementById('more-btn').classList.add('hidden');
         }
@@ -414,7 +426,7 @@
 
     // --- NEW: ADDS 1 TASK ---
     window.loadOneExtraTask = () => {
-        if(currentLocalTasks.length >= 10) return; // Max limit
+        if(currentLocalTasks.length >= 10) return; 
 
         const shuffled = [...allTasks].sort(() => 0.5 - Math.random());
         let newTask = null;
@@ -425,6 +437,8 @@
         if(newTask) {
             currentLocalTasks.push(newTask);
             localStorage.setItem('travel_app_tasks', JSON.stringify(currentLocalTasks));
+            
+            // Re-randăm imediat pentru a ascunde butoanele (trebuie să faci noul task)
             const ref = doc(db, "rooms", currentRoom);
             getDoc(ref).then(s => renderTasksAndSync(s.data().submissions || []));
         }
@@ -445,7 +459,6 @@
     }
 
     window.markAsFailed = async (domId, taskText) => {
-        // Fara confirmare
         const canvas = document.createElement('canvas');
         canvas.width = 300; canvas.height = 150;
         const ctx = canvas.getContext('2d');
