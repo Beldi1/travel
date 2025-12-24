@@ -70,6 +70,21 @@
             width: 50px; height: 50px; border-radius: 50%; border: 2px solid #ffcc00; object-fit: cover;
         }
 
+        /* --- ISTORIC CAMERE (CSS NOU) --- */
+        .history-list {
+            margin-top: 15px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .history-item {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 15px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .history-item span { font-size: 0.9rem; color: #ccc; }
+        .join-mini-btn {
+            background: #6c5ce7; color: white; border: none; padding: 5px 12px;
+            border-radius: 15px; cursor: pointer; font-size: 0.8rem;
+        }
+
         /* --- NOTIFICARE TOAST (New Player) --- */
         .toast-notification {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
@@ -81,17 +96,11 @@
             opacity: 0; pointer-events: none; transition: 0.5s;
             margin-top: -50px; /* Hidden initially */
         }
-        .toast-notification.show {
-            opacity: 1; margin-top: 0;
-        }
-        .toast-img {
-            width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; object-fit: cover;
-        }
+        .toast-notification.show { opacity: 1; margin-top: 0; }
+        .toast-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
 
         /* --- LOBBY PLAYER LIST --- */
-        .lobby-list {
-            display: flex; flex-direction: column; gap: 10px; margin-top: 20px;
-        }
+        .lobby-list { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
         .lobby-player {
             display: flex; align-items: center; gap: 10px; 
             background: rgba(255,255,255,0.05); padding: 10px; border-radius: 15px;
@@ -103,9 +112,7 @@
             display: flex; justify-content: space-between; align-items: center;
             padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        .status-badge {
-            font-size: 0.8rem; padding: 4px 8px; border-radius: 10px;
-        }
+        .status-badge { font-size: 0.8rem; padding: 4px 8px; border-radius: 10px; }
         .status-playing { background: #555; color: #ccc; }
         .status-ready { background: #2dc937; color: white; }
         
@@ -150,9 +157,11 @@
                     <button class="btn" onclick="createRoom()" style="background:#6c5ce7">Creează</button>
                     <button class="btn" onclick="joinRoom()" style="background:#2dc937">Intră</button>
                 </div>
-                <div id="recent-area" style="margin-top:20px; display:none;">
-                     <p style="font-size:0.8rem; opacity:0.7;">Camere recente:</p>
-                     <div id="recent-rooms-list" style="display:flex; gap:5px; justify-content:center;"></div>
+                
+                <div id="history-area" style="margin-top:25px; display:none; text-align:left;">
+                     <p style="font-size:0.9rem; color:#ffcc00; margin-bottom:10px;">🕒 Istoric Camere:</p>
+                     <div id="history-list" class="history-list">
+                         </div>
                 </div>
             </div>
 
@@ -224,8 +233,7 @@
     const db = getFirestore(app);
     const usersCollection = collection(db, "users");
 
-    // LISTA NOUA DE TASK-URI (50 BUCĂȚI)
-    const allTasks = [
+   const allTasks = [
         // 📸 Interacțiune Socială & Curaj
         "📸 Fă poză cu 2 oameni random.",
         "📸 Fă o poză unui autograf primit de la cineva.",
@@ -293,7 +301,7 @@
     let skips = 2; 
     let myVotes = 5;
     let votedIdx = [];
-    let previousPlayerCount = 0; // Pentru a detecta jucători noi
+    let previousPlayerCount = 0; 
 
     // --- INIT ---
     async function initApp() {
@@ -311,7 +319,10 @@
                 currentUser = { name: parsedUser.name, photo: parsedUser.avatar };
                 document.getElementById('my-name').innerText = currentUser.name;
                 document.getElementById('my-avatar').src = currentUser.photo;
-                renderRecentRooms();
+                
+                // RENDER ROOM HISTORY
+                renderHistory();
+
                 const savedRoom = localStorage.getItem('travel_app_room');
                 if(savedRoom) { joinRoomLogic(savedRoom); } 
                 else { document.getElementById('security-overlay').style.display = 'none'; }
@@ -323,28 +334,40 @@
     window.logout = () => { if(confirm("Te deloghezi?")) { localStorage.clear(); window.location.href = "login.html"; } }
     window.exitRoom = () => { localStorage.removeItem('travel_app_room'); location.reload(); }
 
-    function addToRecentRooms(rName) {
-        let recent = JSON.parse(localStorage.getItem('travel_recent_rooms') || '[]');
-        recent = recent.filter(r => r !== rName);
-        recent.unshift(rName);
-        if(recent.length > 3) recent.pop();
-        localStorage.setItem('travel_recent_rooms', JSON.stringify(recent));
+    // --- LOGICA ISTORIC CAMERE ---
+    function addToHistory(rName) {
+        let history = JSON.parse(localStorage.getItem('travel_room_history') || '[]');
+        // Scoatem camera dacă există deja ca să o punem prima
+        history = history.filter(r => r !== rName);
+        history.unshift(rName);
+        // Păstrăm doar ultimele 5
+        if(history.length > 5) history.pop();
+        localStorage.setItem('travel_room_history', JSON.stringify(history));
     }
-    function renderRecentRooms() {
-        let recent = JSON.parse(localStorage.getItem('travel_recent_rooms') || '[]');
-        const container = document.getElementById('recent-rooms-list');
-        const area = document.getElementById('recent-area');
-        if(recent.length > 0) {
+
+    function renderHistory() {
+        let history = JSON.parse(localStorage.getItem('travel_room_history') || '[]');
+        const container = document.getElementById('history-list');
+        const area = document.getElementById('history-area');
+        
+        if(history.length > 0) {
             area.style.display = 'block';
             container.innerHTML = '';
-            recent.forEach(r => {
-                const chip = document.createElement('div');
-                chip.style.cssText = "background:rgba(108, 92, 231, 0.3); border:1px solid #6c5ce7; padding:5px 12px; border-radius:20px; font-size:0.8rem; cursor:pointer;";
-                chip.innerText = r;
-                chip.onclick = () => { document.getElementById('room-input').value = r; joinRoom(); };
-                container.appendChild(chip);
+            history.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <span>📁 ${r}</span>
+                    <button class="join-mini-btn" onclick="quickJoin('${r}')">Reintră</button>
+                `;
+                container.appendChild(item);
             });
         }
+    }
+
+    window.quickJoin = (rName) => {
+        document.getElementById('room-input').value = rName;
+        joinRoom();
     }
 
     // --- NOTIFICARE TOAST ---
@@ -363,8 +386,8 @@
         try {
             await setDoc(doc(db, "rooms", rName), { 
                 status: "lobby", 
-                admin: currentUser.name, // ADMIN SETAT
-                players: [currentUser], // Salvăm obiectul complet
+                admin: currentUser.name, 
+                players: [currentUser], 
                 submissions: [], 
                 finishedPlayers: [] 
             });
@@ -378,7 +401,6 @@
         const ref = doc(db, "rooms", rName);
         const snap = await getDoc(ref);
         if(snap.exists()) {
-            // Verificăm dacă userul e deja în listă ca să nu îl dublăm
             const currentData = snap.data();
             const alreadyIn = currentData.players.some(p => p.name === currentUser.name);
             if(!alreadyIn) {
@@ -390,7 +412,7 @@
 
     function saveRoomAndJoin(rName) {
         localStorage.setItem('travel_app_room', rName);
-        addToRecentRooms(rName);
+        addToHistory(rName); // Salvăm în istoric
         joinRoomLogic(rName);
     }
 
@@ -400,7 +422,6 @@
         document.getElementById('lobby-room-name').innerText = "Lobby: " + rName;
         document.getElementById('security-overlay').style.display = 'none';
         
-        // Ascundem inputurile initiale
         document.getElementById('lobby-inputs').classList.add('hidden');
         document.getElementById('lobby-waiting').classList.remove('hidden');
 
@@ -410,7 +431,6 @@
 
             // 1. FAZA DE LOBBY
             if(d.status === 'lobby') {
-                // Render lista playeri
                 const list = document.getElementById('lobby-player-list');
                 list.innerHTML = '';
                 d.players.forEach(p => {
@@ -418,17 +438,14 @@
                     list.innerHTML += `<div class="lobby-player"><img src="${p.photo}"><span>${p.name} ${isAdmin ? '👑' : ''}</span></div>`;
                 });
 
-                // Detectare jucător nou pentru Notificare
                 if (d.players.length > previousPlayerCount && previousPlayerCount !== 0) {
                     const newPlayer = d.players[d.players.length - 1];
-                    // Nu îmi arăta mie notificare despre mine când intru
                     if (newPlayer.name !== currentUser.name) {
                         showPlayerToast(newPlayer.name, newPlayer.photo);
                     }
                 }
                 previousPlayerCount = d.players.length;
 
-                // Logica Admin
                 if(d.admin === currentUser.name) {
                     document.getElementById('admin-controls').classList.remove('hidden');
                     document.getElementById('waiting-msg').classList.add('hidden');
@@ -441,7 +458,6 @@
             else if(d.status === 'playing') {
                 document.getElementById('lobby-screen').classList.remove('active');
                 
-                // Verificăm dacă am terminat eu
                 if(d.finishedPlayers && d.finishedPlayers.includes(currentUser.name)) {
                     renderWaitingScreen(d.players, d.finishedPlayers);
                     document.getElementById('game-screen').classList.remove('active');
@@ -452,10 +468,8 @@
                     document.getElementById('game-screen').classList.add('active');
                 }
 
-                // TRANZIȚIE VOTARE: DOAR DACĂ TOȚI AU TERMINAT
                 if(d.finishedPlayers && d.players && d.finishedPlayers.length === d.players.length && d.players.length > 0) {
                     if(d.status !== 'voting') { 
-                        // Doar adminul sau primul dă trigger, dar aici lăsăm deschis că Firestore face merge
                         updateDoc(doc(db, "rooms", currentRoom), { status: 'voting' }); 
                     }
                 }
@@ -520,7 +534,7 @@
             if (sub) {
                 completedCount++;
                 if(sub.photo.startsWith("data:image/png;base64,FAIL")) {
-                     html += `<div class="task-card failed"><b>❌ ${t} (Eșuat)</b></div>`;
+                     html += `<div class="task-card failed"><b>❌ ${t}</b></div>`;
                 } else {
                      html += `<div class="task-card completed"><b>✅ ${t}</b><img src="${sub.photo}" width="100%" style="border-radius:10px; margin-top:5px;"></div>`;
                 }
