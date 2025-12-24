@@ -3,190 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Login - Secret Santa 2024</title>
-    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <title>Travel Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* --- MODERN UI & VARIABLES --- */
+        /* --- DESIGN MODERN TRAVEL --- */
         :root {
-            --red: #ff3b3f;
-            --dark-red: #a80000;
-            --gold: #ffcc00;
-            --dark-bg: #0a0a0a;
-            --glass: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.15);
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --glass: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            --white: #ffffff;
+            --accent: #ff7e5f; /* Culoare de apus */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--dark-bg);
-            color: white;
             font-family: 'Poppins', sans-serif;
-            overflow-x: hidden;
+            color: var(--white);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center; /* Centrat vertical pentru Login */
-            background: radial-gradient(circle at 50% 10%, #1a2a1a 0%, #000000 100%);
+            justify-content: center;
+            overflow: hidden;
+            /* Fundal animat interesant */
+            background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #ff7e5f);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
         }
 
-        /* --- BACKGROUND ANIMATIONS --- */
-        .snowflake {
-            position: fixed;
-            top: -10px;
-            color: #fff;
-            font-size: 1.2em;
-            user-select: none;
-            z-index: 0;
-            animation: snowfall linear infinite;
-            pointer-events: none;
-            text-shadow: 0 0 5px rgba(255,255,255,0.8);
-        }
-        @keyframes snowfall {
-            0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
-            100% { transform: translateY(105vh) rotate(360deg); opacity: 0.2; }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        .container {
-            width: 95%;
-            max-width: 450px;
-            z-index: 10;
-            padding: 20px;
+        /* Container principal cu efect de sticlă (Glassmorphism) */
+        .login-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 50px 40px;
+            width: 90%;
+            max-width: 400px;
             text-align: center;
-            position: relative;
+            box-shadow: var(--shadow);
+            transform: translateY(0);
+            transition: transform 0.3s;
+        }
+
+        .login-card:hover {
+            transform: translateY(-5px);
         }
 
         /* --- TYPOGRAPHY --- */
         h1 {
-            font-family: 'Mountains of Christmas', cursive;
-            color: var(--red);
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            text-shadow: 0 0 20px rgba(255, 59, 63, 0.4);
-            animation: float 3s ease-in-out infinite;
+            font-family: 'Dancing Script', cursive;
+            font-size: 4rem;
+            margin-bottom: 10px;
+            background: -webkit-linear-gradient(#fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
-        h2 { font-weight: 600; color: var(--gold); margin-bottom: 10px; letter-spacing: 1px; }
-
-        /* --- GLASS CARDS --- */
-        .glass-card {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 30px 20px;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 40px;
+            font-weight: 300;
+            letter-spacing: 1px;
         }
-        
+
         /* --- INPUTS --- */
-        input, textarea {
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+            opacity: 0.9;
+        }
+
+        input {
             width: 100%;
-            padding: 16px;
-            margin: 8px 0;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.3);
+            padding: 15px 20px;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.2);
             color: white;
             font-size: 1rem;
-            transition: 0.3s;
+            transition: all 0.3s ease;
             font-family: 'Poppins', sans-serif;
         }
-        textarea { resize: vertical; min-height: 80px; }
-        input:focus, textarea:focus {
-            border-color: var(--gold);
-            background: rgba(0,0,0,0.5);
-            box-shadow: 0 0 15px rgba(255, 204, 0, 0.2);
+
+        input::placeholder { color: rgba(255,255,255,0.5); }
+
+        input:focus {
+            background: rgba(0,0,0,0.4);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(255, 126, 95, 0.3);
         }
 
-        /* --- BUTTONS --- */
+        /* --- BUTTON --- */
         .btn {
-            background: linear-gradient(135deg, var(--red), var(--dark-red));
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
             color: white;
             border: none;
-            padding: 18px 40px;
-            font-size: 1.2rem;
+            padding: 16px;
+            font-size: 1.1rem;
             border-radius: 50px;
             cursor: pointer;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
             width: 100%;
-            margin-top: 20px;
-            box-shadow: 0 10px 20px rgba(255, 59, 63, 0.3);
+            margin-top: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 20px rgba(255, 126, 95, 0.4);
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
-        .btn:active { transform: scale(0.95); }
-        .btn::after {
-            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: 0.5s;
-        }
-        .btn:hover::after { left: 100%; }
 
-        /* --- UPLOAD ZONE --- */
-        .file-upload-wrapper { margin: 15px 0; }
-        .custom-file-upload {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 15px;
-            cursor: pointer;
-            background: rgba(255,255,255,0.05);
-            border: 2px dashed rgba(255,255,255,0.2);
-            border-radius: 15px;
-            color: #ccc;
-            transition: 0.3s;
+        .btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 30px rgba(255, 126, 95, 0.6);
         }
-        .custom-file-upload:hover { background: rgba(255,255,255,0.1); border-color: var(--gold); color: var(--gold); }
-        input[type="file"] { display: none; }
+        
+        .btn:active { transform: scale(0.95); }
+
+        /* Mesaj eroare */
+        #login-msg {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            min-height: 20px;
+            font-weight: 500;
+        }
+
+        /* Elemente decorative de fundal */
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: white;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        .c1 { width: 300px; height: 300px; top: -100px; left: -100px; }
+        .c2 { width: 200px; height: 200px; bottom: -50px; right: -50px; background: var(--accent); opacity: 0.2; }
 
     </style>
 </head>
 <body>
 
-    <div id="snow-container"></div>
+    <div class="circle c1"></div>
+    <div class="circle c2"></div>
 
-    <div class="container">
-        <h1>Secret Santa 🎄</h1>
+    <div class="login-card">
+        <h1>Travel</h1>
+        <p>Explorează lumea cu noi</p>
         
-        <div id="login-section" class="glass-card">
-            <h2>Identificare</h2>
-            <p style="opacity: 0.8; margin-bottom: 20px;">Hai să vedem cine ești!</p>
-            
-            <input type="text" id="username" placeholder="Nume" required autocomplete="off">
-            <input type="password" id="userpass" placeholder="Parola" required>
-            <textarea id="interests" placeholder="Ce îți place? (ex: pisici, cafea...) - (Opțional)"></textarea>
-            
-            <div id="upload-area">
-                <div class="file-upload-wrapper">
-                    <label for="file-upload" class="custom-file-upload">
-                        <span>📷</span> Alege o poză
-                    </label>
-                    <input id="file-upload" type="file" accept="image/*" onchange="processImage(this)"/>
-                </div>
-                <p id="file-name" style="font-size: 0.8rem; color: var(--gold); min-height: 1.2em;"></p>
-                <canvas id="img-canvas" style="display: none;"></canvas>
-                <input type="hidden" id="final-image-base64">
-            </div>
-
-            <button class="btn" onclick="handleLogin()">Intră în Atelier 🎁</button>
-            <p id="login-msg" style="color: #ff8888; font-size: 0.85rem; margin-top: 15px; font-weight: 600; min-height: 1.2em;"></p>
+        <div class="input-group">
+            <input type="text" id="username" placeholder="Nume utilizator" required autocomplete="off">
         </div>
+        
+        <div class="input-group">
+            <input type="password" id="userpass" placeholder="Parola" required>
+        </div>
+
+        <button class="btn" onclick="handleLogin()">Log In</button>
+        <div id="login-msg"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where } 
+        import { getFirestore, collection, getDocs, query, where, addDoc } 
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- FIREBASE CONFIG ---
+        // --- FIREBASE CONFIG (Rămâne la fel) ---
         const firebaseConfig = {
             apiKey: "AIzaSyAkMDbDQVyWqeOKlyB9n7_93q7f6RuHiX0",
             authDomain: "secret-santa-ce9e0.firebaseapp.com",
@@ -201,8 +197,9 @@
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
+            // ATENȚIE: Aici am schimbat numele tabelului în "users"
             usersCollection = collection(db, "users");
-        } catch(e) { console.error(e); alert("Eroare Firebase!"); }
+        } catch(e) { console.error(e); alert("Eroare conexiune Firebase!"); }
 
         // --- HELPERS ---
         async function hashPassword(password) {
@@ -213,96 +210,79 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // --- INIT ---
-        window.onload = () => {
-            createSnow();
-            // Dacă e deja logat, îl trimitem direct la joc
-            if(localStorage.getItem('ss_user_local')) {
-                window.location.href = "index.html"; 
-            }
-        };
-
-        // --- IMAGES ---
-        window.processImage = function(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                document.getElementById('file-name').innerText = file.name.substring(0, 20) + "...";
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = function() {
-                        const canvas = document.getElementById('img-canvas');
-                        const ctx = canvas.getContext('2d');
-                        const MAX_WIDTH = 300;
-                        const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH;
-                        canvas.height = img.height * scaleSize;
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        document.getElementById('final-image-base64').value = canvas.toDataURL('image/jpeg', 0.7);
-                    }
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // --- LOGIN LOGIC ---
+        // --- LOGICĂ LOGIN ---
         window.handleLogin = async function() {
-            const name = document.getElementById('username').value;
-            const pass = document.getElementById('userpass').value;
-            const interests = document.getElementById('interests').value;
-            const imgBase64 = document.getElementById('final-image-base64').value;
-            const loginMsg = document.getElementById('login-msg');
+            const name = document.getElementById('username').value.trim();
+            const pass = document.getElementById('userpass').value.trim();
+            const msg = document.getElementById('login-msg');
             
-            if(!name || !pass) { loginMsg.innerText = "Completează Nume și Parolă!"; return; }
+            if(!name || !pass) { 
+                msg.style.color = "#ffcccb";
+                msg.innerText = "Te rog introdu numele și parola."; 
+                return; 
+            }
             
-            loginMsg.innerText = 'Verificăm... 🎅';
+            msg.style.color = "white";
+            msg.innerText = "Se verifică...";
 
             try {
                 const passHash = await hashPassword(pass);
+                // Căutăm în tabelul 'users'
                 const q = query(usersCollection, where("name", "==", name));
                 const querySnapshot = await getDocs(q);
-                let currentUser = null;
 
                 if (!querySnapshot.empty) {
-                    // USER EXISTENT
+                    // --- UTILIZATOR EXISTENT ---
                     const userData = querySnapshot.docs[0].data();
                     if(userData.passwordHash && userData.passwordHash !== passHash) {
-                         loginMsg.innerText = 'Parolă greșită!'; return;
+                         msg.style.color = "#ffcccb";
+                         msg.innerText = 'Parolă incorectă!'; 
+                         return;
                     }
-                    currentUser = { name: userData.name, img: userData.img, passwordHash: passHash, interests: userData.interests || interests };
+                    // Login reușit
+                    loginSuccess(userData);
                 } else {
-                    // USER NOU
-                    const finalImg = imgBase64 || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
-                    currentUser = { name, img: finalImg, passwordHash: passHash, interests: interests };
+                    // --- UTILIZATOR NOU (AUTO-REGISTER) ---
+                    // Dacă userul nu există, îl creăm pe loc în tabelul 'users'
+                    const newUser = {
+                        name: name,
+                        passwordHash: passHash,
+                        createdAt: Date.now(),
+                        // Avatar default generic
+                        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${name}&backgroundColor=ff7e5f`
+                    };
+                    
+                    await addDoc(usersCollection, newUser);
+                    loginSuccess(newUser);
                 }
 
-                // LOGIN SUCCESS
-                localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
-                loginMsg.innerText = 'Succes! Se încarcă...';
-                
-                // --- REDIRECTIONARE ---
-                // Modifică aici dacă pagina principală are alt nume
-                setTimeout(() => {
-                    window.location.href = "index.html"; 
-                }, 1000);
-
             } catch (e) {
-                console.error(e); loginMsg.innerText = 'Eroare conexiune.';
+                console.error(e);
+                msg.style.color = "#ffcccb";
+                msg.innerText = 'Eroare de conexiune.';
             }
         }
 
-        function createSnow() {
-            const c = document.getElementById('snow-container');
-            for(let i=0; i<40; i++) {
-                const f = document.createElement('div');
-                f.className = 'snowflake'; f.innerHTML = '❄';
-                f.style.left = Math.random()*100+'vw';
-                f.style.animationDuration = (Math.random()*5+5)+'s';
-                f.style.opacity = Math.random();
-                c.appendChild(f);
-            }
+        function loginSuccess(user) {
+            const msg = document.getElementById('login-msg');
+            msg.style.color = "#90ee90"; // Light green
+            msg.innerText = `Bun venit, ${user.name}!`;
+            
+            // Salvăm sesiunea local
+            localStorage.setItem('travel_app_user', JSON.stringify(user));
+
+            // Redirecționare
+            setTimeout(() => {
+                window.location.href = "index.html"; 
+            }, 1000);
         }
+
+        // Verificare la încărcare (dacă e deja logat)
+        window.onload = () => {
+            if(localStorage.getItem('travel_app_user')) {
+                window.location.href = "index.html";
+            }
+        };
     </script>
 </body>
 </html>
